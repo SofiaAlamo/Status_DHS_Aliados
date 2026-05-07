@@ -724,12 +724,10 @@ function boot() {
   const selMentor    = document.getElementById('f-mentor');
   const selColegio   = document.getElementById('f-colegio');
 
+  // País y Operation mode siempre se pueblan con todos los valores del dataset
+  // (porque pueden estar bloqueados por la vista, pero si no, sirven como filtro libre).
   RAW.paises.forEach(p => selPais.appendChild(opt(p)));
   RAW.opModes.forEach(o => selOp.appendChild(opt(o)));
-  RAW.redes.forEach(r => selRed.appendChild(opt(r)));
-  RAW.calendarios.forEach(c => selCalendario.appendChild(opt(c)));
-  RAW.mentores.forEach(m => selMentor.appendChild(opt(m)));
-  RAW.colegios.forEach(c => selColegio.appendChild(opt(c)));
 
   // Aplicar y bloquear los filtros que vienen de la URL.
   // Si el valor es array (lista de múltiples valores), mostramos un texto
@@ -761,6 +759,16 @@ function boot() {
 
   lockFilter(selPais,       document.getElementById('wrap-pais'),       LOCKED.pais);
   lockFilter(selOp,         document.getElementById('wrap-opmode'),     LOCKED.opmode);
+
+  // Red, Calendario, Mentor: poblar SOLO con valores que existen dentro de la vista
+  // (así el equipo Santillana no ve mentores/calendarios/redes que no aplican).
+  // getRowsEnVista() respeta los filtros bloqueados por URL (LOCKED.pais, LOCKED.red).
+  const rowsEnVista = getRowsEnVista();
+  uniqSorted(rowsEnVista.map(r => r.red).filter(Boolean)).forEach(r => selRed.appendChild(opt(r)));
+  uniqSorted(rowsEnVista.map(r => r.calendario).filter(Boolean)).forEach(c => selCalendario.appendChild(opt(c)));
+  uniqSorted(rowsEnVista.map(r => r.mentor).filter(m => m && m !== 'Sin asignar')).forEach(m => selMentor.appendChild(opt(m)));
+
+  // Aplicar bloqueos de Red / Calendario / Mentor (en ese orden, después de poblar)
   lockFilter(selRed,        document.getElementById('wrap-red'),        LOCKED.red);
   lockFilter(selCalendario, document.getElementById('wrap-calendario'), LOCKED.calendario);
   lockFilter(selMentor,     document.getElementById('wrap-mentor'),     LOCKED.mentor);
@@ -896,30 +904,54 @@ function exportarPDF() {
   document.title = prevTitle;
 }
 
+// Devuelve las filas que entran en la vista actual (respetando los LOCKED
+// que vienen de la URL: pais, red, calendario, mentor). NO aplica los
+// filtros libres del usuario — para eso está getFilteredRows().
+function getRowsEnVista() {
+  if (!RAW) return [];
+  const paisList = Array.isArray(LOCKED.pais) ? LOCKED.pais.map(v => v.toLowerCase()) : null;
+  const redList  = Array.isArray(LOCKED.red)  ? LOCKED.red.map(v => v.toLowerCase())  : null;
+  const paisSingle = (typeof LOCKED.pais === 'string') ? LOCKED.pais.toLowerCase() : null;
+  const redSingle  = (typeof LOCKED.red  === 'string') ? LOCKED.red.toLowerCase()  : null;
+
+  return RAW.rows.filter(r => {
+    if (paisList && !paisList.includes((r.pais || '').toLowerCase())) return false;
+    if (paisSingle && (r.pais || '').toLowerCase() !== paisSingle) return false;
+    if (redList && !redList.includes((r.red || '').toLowerCase())) return false;
+    if (redSingle && (r.red || '').toLowerCase() !== redSingle) return false;
+    if (LOCKED.calendario && r.calendario !== LOCKED.calendario) return false;
+    if (LOCKED.mentor     && r.mentor     !== LOCKED.mentor)     return false;
+    return true;
+  });
+}
+
 function repoblarColegios() {
-  const input   = document.getElementById('f-colegio');
+  const input    = document.getElementById('f-colegio');
   const datalist = document.getElementById('list-colegios');
   const prev = input.value.trim();
 
   datalist.innerHTML = '';
 
+  // Punto de partida: solo filas dentro de la vista actual
+  let candidatos = getRowsEnVista();
+
+  // Aplicar también los filtros libres elegidos por el usuario
   const p  = document.getElementById('f-pais').value;
   const om = document.getElementById('f-opmode').value;
   const rd = document.getElementById('f-red').value;
   const ca = document.getElementById('f-calendario').value;
   const m  = document.getElementById('f-mentor').value;
 
+  // Solo aplicamos el filtro libre si NO está bloqueado por la vista
+  // (los bloqueados ya están aplicados en getRowsEnVista)
+  if (!LOCKED.pais       && p  !== '__all__') candidatos = candidatos.filter(r => r.pais       === p);
+  if (!LOCKED.opmode     && om !== '__all__') candidatos = candidatos.filter(r => r.opMode     === om);
+  if (!LOCKED.red        && rd !== '__all__') candidatos = candidatos.filter(r => r.red        === rd);
+  if (!LOCKED.calendario && ca !== '__all__') candidatos = candidatos.filter(r => r.calendario === ca);
+  if (!LOCKED.mentor     && m  !== '__all__') candidatos = candidatos.filter(r => r.mentor     === m);
+
   const colegiosVisibles = uniqSorted(
-    RAW.rows
-      .filter(r =>
-        (p  === '__all__' || r.pais       === p)  &&
-        (om === '__all__' || r.opMode     === om) &&
-        (rd === '__all__' || r.red        === rd) &&
-        (ca === '__all__' || r.calendario === ca) &&
-        (m  === '__all__' || r.mentor     === m)
-      )
-      .map(r => r.colegio)
-      .filter(c => c !== 'Sin nombre')
+    candidatos.map(r => r.colegio).filter(c => c !== 'Sin nombre')
   );
 
   colegiosVisibles.forEach(c => {
