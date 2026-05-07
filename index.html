@@ -470,6 +470,34 @@ const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSPFRKVvwUioC_7
    ───────────────────────────────────────────────────────── */
 const VISTA_OPMODE = 'Santillana';
 
+/* ─────────────────────────────────────────────────────────
+   DICCIONARIO DE VISTAS — token opaco → filtros
+   Cada entrada define qué pais/red ve esa URL.
+   La URL final es: <sitio>/#<token>
+   Ej: https://tu-usuario.github.io/status-aliados/#2b5prxa
+   Si el token no existe, se muestra la vista completa
+   (todos los colegios de Aliados DH).
+   IMPORTANTE: los valores de pais/red deben matchear EXACTO
+   los del CSV (mayúsculas, acentos, espacios). Validar
+   contra el CSV antes de distribuir las URLs.
+   ───────────────────────────────────────────────────────── */
+const VISTAS = {
+  '2b5prxa': { label: 'Aliados DH (todo)' },
+  '4mm9yc8': { label: 'Argentina',                pais: ['Argentina'] },
+  '4bqe396': { label: 'Colombia (todo)',          pais: ['Colombia'] },
+  'wmjup9v': { label: 'Colombia · Norma',         pais: ['Colombia'], red: ['Norma'] },
+  '7a83qts': { label: 'Colombia · Sumun Norma',   pais: ['Colombia'], red: ['Sumun Norma'] },
+  'tbe2dc4': { label: 'Colombia · Compartir',     pais: ['Colombia'], red: ['Compartir'] },
+  'ywvsvbu': { label: 'Colombia · UNOi',          pais: ['Colombia'], red: ['UNOi'] },
+  'ahzfjue': { label: 'Colombia · Sumun Santillana', pais: ['Colombia'], red: ['Sumun Santillana'] },
+  'zsdpgvd': { label: 'México (todo)',            pais: ['México'] },
+  'tntxvmw': { label: 'México · UNOi',            pais: ['México'], red: ['UNOi'] },
+  'f3xrzn6': { label: 'México · Compartir',       pais: ['México'], red: ['Compartir'] },
+  'hsatwhy': { label: 'México · Mercado didáctico', pais: ['México'], red: ['Mercado didáctico'] },
+  'zbr6p5z': { label: 'CAN (Honduras + El Salvador)', pais: ['Honduras', 'El Salvador'] },
+  'txv6n6r': { label: 'Perú',                     pais: ['Perú'] },
+};
+
 const COLORS = {
   verde: '#2f8a4f', amarillo: '#d4a017', rojo: '#b03030', sin_dato: '#b4ada1',
   ink: '#1a1814', inkSoft: '#5b554c', accent: '#2b3a55', line: '#e7e1d4'
@@ -650,15 +678,43 @@ function boot() {
     'Actualizado ' + d.toLocaleString('es-AR', { dateStyle: 'medium', timeStyle: 'short' });
 
   // ── Leer parámetros de URL ──────────────────────────────
+  // Prioridad 1: hash con token opaco (#xxxxxxx) → busca en VISTAS
+  // Prioridad 2 (fallback): query string ?pais=...&red=... (admite listas separadas por coma)
   const qp = new URLSearchParams(window.location.search);
-  const LOCKED = {
-    pais:       qp.get('pais')       || null,
-    opmode:     qp.get('opmode')     || null,
-    red:        qp.get('red')        || null,
-    calendario: qp.get('calendario') || null,
-    mentor:     qp.get('mentor')     || null,
+  const parseList = (raw) => {
+    if (!raw) return null;
+    const arr = raw.split(',').map(s => s.trim()).filter(Boolean);
+    return arr.length ? arr : null;
   };
-  const hasLock = Object.values(LOCKED).some(v => v !== null);
+
+  const hashToken = (window.location.hash || '').replace(/^#/, '').trim().toLowerCase();
+  const vista = hashToken ? VISTAS[hashToken] : null;
+
+  let LOCKED;
+  if (vista) {
+    // Vista resuelta por token: usamos solo lo definido en el diccionario
+    LOCKED = {
+      pais:       vista.pais       || null,
+      opmode:     vista.opmode     || null,
+      red:        vista.red        || null,
+      calendario: vista.calendario || null,
+      mentor:     vista.mentor     || null,
+      _label:     vista.label      || null,
+    };
+  } else {
+    // Sin token válido → fallback a query params
+    LOCKED = {
+      pais:       parseList(qp.get('pais')),
+      opmode:     qp.get('opmode')     || null,
+      red:        parseList(qp.get('red')),
+      calendario: qp.get('calendario') || null,
+      mentor:     qp.get('mentor')     || null,
+      _label:     null,
+    };
+    // Si vino un hash que no matchea ninguna vista, lo logueamos para diagnóstico
+    if (hashToken) console.warn('Token de vista no reconocido:', hashToken, '— mostrando vista completa');
+  }
+  const hasLock = LOCKED.pais || LOCKED.opmode || LOCKED.red || LOCKED.calendario || LOCKED.mentor;
 
   // ── Poblar y configurar selectores ─────────────────────
   const selPais    = document.getElementById('f-pais');
@@ -675,16 +731,29 @@ function boot() {
   RAW.mentores.forEach(m => selMentor.appendChild(opt(m)));
   RAW.colegios.forEach(c => selColegio.appendChild(opt(c)));
 
-  // Aplicar y bloquear los filtros que vienen de la URL
+  // Aplicar y bloquear los filtros que vienen de la URL.
+  // Si el valor es array (lista de múltiples valores), mostramos un texto
+  // resumen tipo "Honduras + 1 más" en el select, ya que un <select> simple
+  // no soporta multi-selección.
   const lockFilter = (sel, wrap, value) => {
     if (!value) return;
-    // Buscamos una opción que matchee (case-insensitive)
-    const match = [...sel.options].find(o => o.value.toLowerCase() === value.toLowerCase());
-    if (match) sel.value = match.value;
-    else {
-      // Si el valor no existe en las opciones, lo agregamos como opción
-      sel.appendChild(opt(value));
-      sel.value = value;
+    if (Array.isArray(value)) {
+      // Multi-valor: agregamos una opción virtual con el resumen
+      const label = value.length > 1
+        ? `${value[0]} + ${value.length - 1} más`
+        : value[0];
+      const virtualOpt = opt(label);
+      virtualOpt.value = '__locked_multi__';
+      sel.appendChild(virtualOpt);
+      sel.value = '__locked_multi__';
+    } else {
+      // Valor simple: comportamiento original
+      const match = [...sel.options].find(o => o.value.toLowerCase() === value.toLowerCase());
+      if (match) sel.value = match.value;
+      else {
+        sel.appendChild(opt(value));
+        sel.value = value;
+      }
     }
     wrap.classList.add('locked');
     sel.disabled = true;
@@ -698,14 +767,21 @@ function boot() {
 
   // Badge permanente de Vista Aliados DH (+ filtros bloqueados por URL si los hay)
   {
-    const labels = [];
-    if (LOCKED.pais)       labels.push(LOCKED.pais);
-    if (LOCKED.red)        labels.push('Red: ' + LOCKED.red);
-    if (LOCKED.calendario) labels.push('Calendario: ' + LOCKED.calendario);
-    if (LOCKED.mentor)     labels.push('Mentor: ' + LOCKED.mentor);
     const badge = document.getElementById('vista-badge');
-    const sufijo = labels.length ? ' · ' + labels.join(' · ') : '';
-    badge.innerHTML = `<span class="badge-icon">🔒</span> Vista <strong>Aliados DH</strong>${sufijo}`;
+    if (LOCKED._label) {
+      // Vista por token: usamos el label del diccionario, que ya incluye país y red
+      badge.innerHTML = `<span class="badge-icon">🔒</span> Vista <strong>Aliados DH</strong> · ${LOCKED._label}`;
+    } else {
+      // Fallback (sin token o filtros por query string)
+      const labels = [];
+      const fmt = v => Array.isArray(v) ? v.join(' + ') : v;
+      if (LOCKED.pais)       labels.push(fmt(LOCKED.pais));
+      if (LOCKED.red)        labels.push('Red: ' + fmt(LOCKED.red));
+      if (LOCKED.calendario) labels.push('Calendario: ' + LOCKED.calendario);
+      if (LOCKED.mentor)     labels.push('Mentor: ' + LOCKED.mentor);
+      const sufijo = labels.length ? ' · ' + labels.join(' · ') : '';
+      badge.innerHTML = `<span class="badge-icon">🔒</span> Vista <strong>Aliados DH</strong>${sufijo}`;
+    }
     badge.classList.remove('hidden');
   }
 
@@ -758,10 +834,15 @@ function getFilteredRows() {
   const ca = document.getElementById('f-calendario').value;
   const m  = document.getElementById('f-mentor').value;
   const c  = document.getElementById('f-colegio').value.trim();
+
+  // Si el filtro está bloqueado por URL con múltiples valores, usamos la lista
+  const paisList = Array.isArray(LOCKED.pais) ? LOCKED.pais.map(v => v.toLowerCase()) : null;
+  const redList  = Array.isArray(LOCKED.red)  ? LOCKED.red.map(v => v.toLowerCase())  : null;
+
   return RAW.rows.filter(r =>
-    (p  === '__all__' || r.pais       === p)  &&
+    (paisList ? paisList.includes((r.pais || '').toLowerCase()) : (p  === '__all__' || r.pais === p)) &&
     (om === '__all__' || r.opMode     === om) &&
-    (rd === '__all__' || r.red        === rd) &&
+    (redList  ? redList.includes((r.red  || '').toLowerCase())  : (rd === '__all__' || r.red  === rd)) &&
     (ca === '__all__' || r.calendario === ca) &&
     (m  === '__all__' || r.mentor     === m)  &&
     (!c                || r.colegio   === c)
@@ -783,24 +864,31 @@ function render() {
 }
 
 function exportarPDF() {
-  // Título dinámico con los filtros activos
-  const partes = [];
-  const p  = document.getElementById('f-pais').value;
-  const om = document.getElementById('f-opmode').value;
-  const rd = document.getElementById('f-red').value;
-  const ca = document.getElementById('f-calendario').value;
-  const m  = document.getElementById('f-mentor').value;
-  const c  = document.getElementById('f-colegio').value.trim();
-  if (om !== '__all__') partes.push(om);
-  if (p  !== '__all__') partes.push(p);
-  if (rd !== '__all__') partes.push(rd);
-  if (ca !== '__all__') partes.push(ca);
-  if (m  !== '__all__') partes.push(m);
-  if (c)                partes.push(c);
-
-  const titulo = partes.length
-    ? 'Dashboard — ' + partes.join(' · ')
-    : 'Dashboard — Status consolidado';
+  // Si la vista viene de un token, usamos su label directamente
+  let titulo;
+  if (LOCKED._label) {
+    titulo = 'Aliados DH — ' + LOCKED._label;
+  } else {
+    // Fallback: armar título dinámico desde los filtros activos
+    const partes = [];
+    const p  = document.getElementById('f-pais').value;
+    const om = document.getElementById('f-opmode').value;
+    const rd = document.getElementById('f-red').value;
+    const ca = document.getElementById('f-calendario').value;
+    const m  = document.getElementById('f-mentor').value;
+    const c  = document.getElementById('f-colegio').value.trim();
+    const paisLabel = Array.isArray(LOCKED.pais) ? LOCKED.pais.join(' + ') : (p  !== '__all__' ? p  : null);
+    const redLabel  = Array.isArray(LOCKED.red)  ? LOCKED.red.join(' + ')  : (rd !== '__all__' ? rd : null);
+    if (om !== '__all__') partes.push(om);
+    if (paisLabel)        partes.push(paisLabel);
+    if (redLabel)         partes.push(redLabel);
+    if (ca !== '__all__') partes.push(ca);
+    if (m  !== '__all__') partes.push(m);
+    if (c)                partes.push(c);
+    titulo = partes.length
+      ? 'Aliados DH — ' + partes.join(' · ')
+      : 'Aliados DH — Status consolidado';
+  }
 
   const prevTitle = document.title;
   document.title = titulo;
