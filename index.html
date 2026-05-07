@@ -508,6 +508,7 @@ let RAW = null;
 let CHARTS = {};
 let SORT_STATE = { col: 'estudiantes', dir: 'desc' };
 let SORT_STATE_COL = { col: 'estudiantes', dir: 'desc' };
+let LOCKED = { pais: null, opmode: null, red: null, calendario: null, mentor: null, _label: null };
 
 document.addEventListener('DOMContentLoaded', init);
 
@@ -690,7 +691,6 @@ function boot() {
   const hashToken = (window.location.hash || '').replace(/^#/, '').trim().toLowerCase();
   const vista = hashToken ? VISTAS[hashToken] : null;
 
-  let LOCKED;
   if (vista) {
     // Vista resuelta por token: usamos solo lo definido en el diccionario
     LOCKED = {
