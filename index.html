@@ -307,6 +307,79 @@
     .card:has(#tbl-colegios) { page-break-before: always !important; grid-column: span 2 !important; }
   }
 
+  /* ── Treemap semáforo por país ── */
+  .tm-block {
+    position: absolute;
+    overflow: hidden;
+    border-radius: 3px;
+    cursor: default;
+    transition: filter .12s;
+    display: flex;
+    flex-direction: column;
+    padding: 7px 8px;
+  }
+  .tm-block:hover { filter: brightness(0.94); z-index: 5; }
+  .tm-name {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: 12px;
+    line-height: 1.2;
+    color: var(--ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-shrink: 0;
+  }
+  .tm-total {
+    font-size: 10px;
+    color: var(--ink-mute);
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .tm-bar-wrap { margin-top: auto; padding-top: 6px; }
+  .tm-bar {
+    display: flex;
+    height: 4px;
+    border-radius: 2px;
+    overflow: hidden;
+    gap: 1px;
+  }
+  .tm-bar span { display: block; height: 100%; border-radius: 1px; }
+  .tm-counts {
+    display: flex;
+    gap: 5px;
+    margin-top: 3px;
+    font-size: 9px;
+    font-variant-numeric: tabular-nums;
+    flex-wrap: wrap;
+    line-height: 1;
+  }
+  .tm-counts .v { color: var(--verde); }
+  .tm-counts .a { color: var(--amarillo); }
+  .tm-counts .r { color: var(--rojo); }
+  .tm-counts .s { color: var(--gris); }
+  #tm-tooltip {
+    position: fixed;
+    background: var(--ink);
+    color: #fff;
+    padding: 9px 13px;
+    border-radius: 3px;
+    font-size: 11px;
+    line-height: 1.65;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .1s;
+    z-index: 999;
+    white-space: nowrap;
+  }
+  #tm-tooltip.show { opacity: 1; }
+  #tm-tooltip .tt-h { font-family: var(--serif); font-size: 13px; font-weight: 600; margin-bottom: 5px; }
+  #tm-tooltip .tt-v { color: #7dd4a4; }
+  #tm-tooltip .tt-a { color: #f5cc6a; }
+  #tm-tooltip .tt-r { color: #e07070; }
+  #tm-tooltip .tt-s { color: #ccc; }
+
   .comentario-box {
     background: var(--bg-card);
     border: 1px solid var(--line);
@@ -337,6 +410,8 @@
 </style>
 </head>
 <body>
+
+<div id="tm-tooltip"></div>
 
 <div class="shell">
   <div class="logo-bar">
@@ -397,7 +472,7 @@
     <div class="grid">
       <!-- Fila 1: Semáforos -->
       <article class="card span-6"><h2>Semáforo por Operation Mode</h2><div class="subtitle">Distribución porcentual del estado</div><div class="chart-wrap"><canvas id="chart-sem-opmode"></canvas></div><div class="legend" id="legend-sem"></div></article>
-      <article class="card span-6"><h2>Semáforo por País</h2><div class="subtitle">Distribución porcentual del estado</div><div class="chart-wrap"><canvas id="chart-sem-pais"></canvas></div></article>
+      <article class="card span-6"><h2>Semáforo por País</h2><div class="subtitle">Cantidad de colegios por estado</div><div class="chart-wrap" id="wrap-sem-pais"><div id="chart-sem-pais" style="position:absolute;inset:0;overflow:hidden;"></div></div></article>
       <!-- Fila 2: Vitalidad + Comunicación -->
       <article class="card span-6"><h2>Vitalidad Digital por País</h2><div class="subtitle">Promedio por país · <span style="color:var(--rojo)">●</span> &lt;35% · <span style="color:var(--amarillo)">●</span> 35–75% · <span style="color:var(--verde)">●</span> ≥75%</div><div class="chart-wrap"><canvas id="chart-vitalidad"></canvas></div></article>
       <article class="card span-6"><h2>Tipo de Comunicación</h2><div class="subtitle">Cantidad de colegios por modalidad</div><div class="chart-wrap"><canvas id="chart-comunicacion"></canvas></div></article>
@@ -831,6 +906,12 @@ function boot() {
 
   repoblarColegios();
   render();
+
+  // Re-renderizar treemap de País al redimensionar ventana
+  window.addEventListener('resize', () => {
+    clearTimeout(window._tmResize);
+    window._tmResize = setTimeout(() => { if (RAW) renderSemPais(getFilteredRows()); }, 150);
+  });
 }
 
 function opt(v) { const o = document.createElement('option'); o.value = v; o.textContent = v; return o; }
@@ -1006,44 +1087,144 @@ function renderSemOpMode(rows) {
 
 function renderSemPais(rows) {
   const groups = groupBy(rows, 'pais');
-  const labels = Object.keys(groups).sort();
-  drawStackedCount('chart-sem-pais', labels, buildSemDatasetsCount(labels.map(l => groups[l])));
-}
+  const data = Object.keys(groups).sort().map(pais => {
+    const rs = groups[pais];
+    return {
+      pais,
+      total:    rs.length,
+      verde:    rs.filter(r => r.semaforo === 'verde').length,
+      amarillo: rs.filter(r => r.semaforo === 'amarillo').length,
+      rojo:     rs.filter(r => r.semaforo === 'rojo').length,
+      sin_dato: rs.filter(r => r.semaforo === 'sin_dato').length,
+    };
+  }).filter(d => d.total > 0).sort((a, b) => b.total - a.total);
 
-function buildSemDatasetsCount(arrayOfRowsPerLabel) {
-  const keys = ['verde','amarillo','rojo','sin_dato'];
-  const colors = [COLORS.verde, COLORS.amarillo, COLORS.rojo, COLORS.sin_dato];
-  return keys.map((k, i) => ({
-    label: SEM_LABELS[k],
-    data: arrayOfRowsPerLabel.map(rs => rs.filter(r => r.semaforo === k).length),
-    backgroundColor: colors[i],
-    borderWidth: 0,
-    barThickness: 'flex',
-    maxBarThickness: 38
-  }));
-}
+  const container = document.getElementById('chart-sem-pais');
+  if (!container) return;
+  container.innerHTML = '';
+  if (!data.length) { container.innerHTML = '<div style="padding:20px;color:var(--ink-mute);text-align:center">Sin datos.</div>'; return; }
 
-function drawStackedCount(canvasId, labels, datasets) {
-  destroy(canvasId);
-  CHARTS[canvasId] = new Chart(document.getElementById(canvasId), {
-    type: 'bar',
-    data: { labels, datasets },
-    options: {
-      responsive: true, maintainAspectRatio: false, indexAxis: 'y',
-      scales: {
-        x: { stacked: true,
-          ticks: { callback: v => Number.isInteger(v) ? v : '', stepSize: 1, color: COLORS.inkSoft, font: { family: 'Inter', size: 11 }},
-          grid:  { color: COLORS.line, drawBorder: false } },
-        y: { stacked: true,
-          ticks: { color: COLORS.ink, font: { family: 'Inter', size: 12 }},
-          grid:  { display: false, drawBorder: false } }
-      },
-      plugins: {
-        legend: { display: false },
-        tooltip: { backgroundColor: COLORS.ink, callbacks: { label: c => c.dataset.label + ': ' + c.parsed.x + ' colegio' + (c.parsed.x === 1 ? '' : 's') }}
-      }
-    }
+  const W = container.offsetWidth  || container.parentElement.offsetWidth  || 400;
+  const H = container.offsetHeight || container.parentElement.offsetHeight || 280;
+  if (W < 10 || H < 10) { setTimeout(() => renderSemPais(rows), 80); return; }
+
+  const rects = tmSquarify(data, 0, 0, W, H);
+  const GAP   = 3;
+
+  const domColors = {
+    verde:    { bg: '#e8f5ee', border: COLORS.verde },
+    amarillo: { bg: '#fdf6e3', border: COLORS.amarillo },
+    rojo:     { bg: '#faeaea', border: COLORS.rojo },
+    sin_dato: { bg: '#f0edea', border: COLORS.sin_dato },
+  };
+
+  rects.forEach(({ d, x, y, w, h }) => {
+    const dom = (['verde','amarillo','rojo','sin_dato']
+      .reduce((best, k) => d[k] > d[best] ? k : best, 'sin_dato'));
+    const dc = domColors[dom];
+
+    const el = document.createElement('div');
+    el.className = 'tm-block';
+    el.style.cssText = `left:${x+GAP/2}px;top:${y+GAP/2}px;width:${w-GAP}px;height:${h-GAP}px;background:${dc.bg};border:1.5px solid ${dc.border}40;`;
+
+    const pct = k => d.total > 0 ? (d[k] / d.total * 100).toFixed(0) : 0;
+    const showBar    = w > 70  && h > 54;
+    const showCounts = w > 100 && h > 74;
+
+    el.innerHTML = `
+      <div class="tm-name">${escapeHtml(d.pais)}</div>
+      <div class="tm-total">${d.total}</div>
+      ${showBar ? `<div class="tm-bar-wrap">
+        <div class="tm-bar">
+          ${d.verde    ? `<span style="width:${pct('verde')}%;background:${COLORS.verde}"></span>`    : ''}
+          ${d.amarillo ? `<span style="width:${pct('amarillo')}%;background:${COLORS.amarillo}"></span>` : ''}
+          ${d.rojo     ? `<span style="width:${pct('rojo')}%;background:${COLORS.rojo}"></span>`     : ''}
+          ${d.sin_dato ? `<span style="width:${pct('sin_dato')}%;background:${COLORS.sin_dato}"></span>` : ''}
+        </div>
+        ${showCounts ? `<div class="tm-counts">
+          ${d.verde    ? `<span class="v">▲${d.verde}</span>`    : ''}
+          ${d.amarillo ? `<span class="a">●${d.amarillo}</span>` : ''}
+          ${d.rojo     ? `<span class="r">▼${d.rojo}</span>`     : ''}
+          ${d.sin_dato ? `<span class="s">–${d.sin_dato}</span>` : ''}
+        </div>` : ''}
+      </div>` : ''}
+    `;
+
+    el.addEventListener('mousemove', e => tmShowTooltip(e, d));
+    el.addEventListener('mouseleave', tmHideTooltip);
+    container.appendChild(el);
   });
+}
+
+function tmShowTooltip(e, d) {
+  const tt = document.getElementById('tm-tooltip');
+  if (!tt) return;
+  tt.innerHTML = `
+    <div class="tt-h">${escapeHtml(d.pais)}</div>
+    <div><span class="tt-v">▲ Sin alarmas</span>: ${d.verde}</div>
+    <div><span class="tt-a">● En alerta</span>: ${d.amarillo}</div>
+    <div><span class="tt-r">▼ Frenada</span>: ${d.rojo}</div>
+    <div><span class="tt-s">– Sin dato</span>: ${d.sin_dato}</div>
+    <div style="margin-top:4px;color:#aaa">Total: ${d.total} colegios</div>
+  `;
+  tt.classList.add('show');
+  tmMoveTooltip(e);
+  document.addEventListener('mousemove', tmMoveTooltip);
+}
+function tmMoveTooltip(e) {
+  const tt = document.getElementById('tm-tooltip');
+  if (!tt) return;
+  const x = e.clientX + 14, y = e.clientY + 14;
+  tt.style.left = (x + 210 > window.innerWidth ? e.clientX - 220 : x) + 'px';
+  tt.style.top  = y + 'px';
+}
+function tmHideTooltip() {
+  const tt = document.getElementById('tm-tooltip');
+  if (tt) tt.classList.remove('show');
+  document.removeEventListener('mousemove', tmMoveTooltip);
+}
+
+function tmSquarify(items, x, y, w, h) {
+  if (!items.length) return [];
+  const total = items.reduce((s, d) => s + d.total, 0);
+  const area  = w * h;
+  const rects = [];
+  let remaining = [...items];
+  while (remaining.length) {
+    const isH = w >= h;
+    let best = Infinity, row = [], rowSum = 0;
+    for (let i = 0; i < remaining.length; i++) {
+      const cand = remaining.slice(0, i + 1);
+      const rSum = cand.reduce((s, d) => s + d.total, 0);
+      const rArea = area * (rSum / total);
+      const side  = isH ? h : w;
+      const worst = tmMaxAspect(cand, rSum, rArea, side);
+      if (worst <= best) { best = worst; row = cand; rowSum = rSum; }
+      else break;
+    }
+    const rArea  = area * (rowSum / total);
+    const side   = isH ? h : w;
+    const rSize  = rArea / side;
+    let cursor   = isH ? y : x;
+    row.forEach(d => {
+      const len = side * (d.total / rowSum);
+      if (isH) { rects.push({ d, x, y: cursor, w: rSize, h: len }); cursor += len; }
+      else     { rects.push({ d, x: cursor, y, w: len, h: rSize }); cursor += len; }
+    });
+    remaining = remaining.slice(row.length);
+    if (isH) { x += rSize; w -= rSize; } else { y += rSize; h -= rSize; }
+  }
+  return rects;
+}
+function tmMaxAspect(items, sum, area, side) {
+  let worst = 0;
+  items.forEach(d => {
+    const a = area * (d.total / sum);
+    const b = side * side * (d.total / sum);
+    const r = Math.max(a / b, b / a);
+    if (r > worst) worst = r;
+  });
+  return worst;
 }
 
 function buildSemDatasets(arrayOfRowsPerLabel) {
