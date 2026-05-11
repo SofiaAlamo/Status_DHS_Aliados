@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Dashboard de Status — Operaciones</title>
+<title>Dashboard de Status — Aliados DH</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -343,7 +343,7 @@
     <img src="logo.png" alt="Digital House Schools" />
   </div>
   <header class="top">
-    <div><h1 class="brand">Status <em>consolidado</em> — implementación regional</h1></div>
+    <div><h1 class="brand">Status <em>Aliados DH</em> — implementación regional</h1></div>
     <div style="display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;">
       <div class="meta">
         <div><span class="dot"></span>Datos en vivo desde Google Sheets</div>
@@ -371,7 +371,7 @@
     <section class="filters">
       <div id="vista-badge" class="hidden"></div>
       <div class="filter" id="wrap-pais"><label for="f-pais">País</label><select id="f-pais"><option value="__all__">Todos</option></select></div>
-      <div class="filter" id="wrap-opmode"><label for="f-opmode">Operation Mode</label><select id="f-opmode"><option value="__all__">Todos</option></select></div>
+      <div class="filter" id="wrap-opmode" style="display:none"><label for="f-opmode">Operation Mode</label><select id="f-opmode"><option value="__all__">Todos</option></select></div>
       <div class="filter" id="wrap-red"><label for="f-red">Red</label><select id="f-red"><option value="__all__">Todas</option></select></div>
       <div class="filter" id="wrap-calendario"><label for="f-calendario">Calendario</label><select id="f-calendario"><option value="__all__">Todos</option></select></div>
       <div class="filter" id="wrap-mentor"><label for="f-mentor">Mentor</label><select id="f-mentor"><option value="__all__">Todos</option></select></div>
@@ -458,6 +458,46 @@
 const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSPFRKVvwUioC_7rKCblIMz7Cu7qvQpQI8LJM982dThQkT_hLqaJgwU2Js8OhEZag4aJ3_5GCfvzSwd/pub?gid=735296945&single=true&output=csv';
 /* ========================================================= */
 
+/* ─────────────────────────────────────────────────────────
+   VISTA RESTRINGIDA — Aliados DH
+   Esta versión del dashboard solo muestra colegios cuyo
+   "Operation mode" sea "Santillana" en el CSV (la marca
+   interna se llama "Aliados DH", el dato origen sigue
+   siendo "Santillana"). Las filas con otro Operation mode
+   (ej: "Nativa") se descartan en transform() y nunca entran
+   al dataset, así no aparecen en KPIs, gráficos, ranking
+   ni mapas de calor.
+   ───────────────────────────────────────────────────────── */
+const VISTA_OPMODE = 'Santillana';
+
+/* ─────────────────────────────────────────────────────────
+   DICCIONARIO DE VISTAS — token opaco → filtros
+   Cada entrada define qué pais/red ve esa URL.
+   La URL final es: <sitio>/#<token>
+   Ej: https://tu-usuario.github.io/status-aliados/#2b5prxa
+   Si el token no existe, se muestra la vista completa
+   (todos los colegios de Aliados DH).
+   IMPORTANTE: los valores de pais/red deben matchear EXACTO
+   los del CSV (mayúsculas, acentos, espacios). Validar
+   contra el CSV antes de distribuir las URLs.
+   ───────────────────────────────────────────────────────── */
+const VISTAS = {
+  '2b5prxa': { label: 'Aliados DH (todo)' },
+  '4mm9yc8': { label: 'Argentina',                pais: ['Argentina'] },
+  '4bqe396': { label: 'Colombia (todo)',          pais: ['Colombia'] },
+  'wmjup9v': { label: 'Colombia · Norma',         pais: ['Colombia'], red: ['Norma'] },
+  '7a83qts': { label: 'Colombia · Sumun Norma',   pais: ['Colombia'], red: ['Sumun Norma'] },
+  'tbe2dc4': { label: 'Colombia · Compartir',     pais: ['Colombia'], red: ['Compartir'] },
+  'ywvsvbu': { label: 'Colombia · UNOi',          pais: ['Colombia'], red: ['UNOi'] },
+  'ahzfjue': { label: 'Colombia · Sumun Santillana', pais: ['Colombia'], red: ['Sumun Santillana'] },
+  'zsdpgvd': { label: 'México (todo)',            pais: ['México'] },
+  'tntxvmw': { label: 'México · UNOi',            pais: ['México'], red: ['UNOi'] },
+  'f3xrzn6': { label: 'México · Compartir',       pais: ['México'], red: ['Compartir'] },
+  'hsatwhy': { label: 'México · Mercado didáctico', pais: ['México'], red: ['Mercado didáctico'] },
+  'zbr6p5z': { label: 'CAN (Honduras + El Salvador)', pais: ['Honduras', 'El Salvador'] },
+  'txv6n6r': { label: 'Perú',                     pais: ['Perú'] },
+};
+
 const COLORS = {
   verde: '#2f8a4f', amarillo: '#d4a017', rojo: '#b03030', sin_dato: '#b4ada1',
   ink: '#1a1814', inkSoft: '#5b554c', accent: '#2b3a55', line: '#e7e1d4'
@@ -468,6 +508,7 @@ let RAW = null;
 let CHARTS = {};
 let SORT_STATE = { col: 'estudiantes', dir: 'desc' };
 let SORT_STATE_COL = { col: 'estudiantes', dir: 'desc' };
+let LOCKED = { pais: null, opmode: null, red: null, calendario: null, mentor: null, _label: null };
 
 document.addEventListener('DOMContentLoaded', init);
 
@@ -539,6 +580,7 @@ function transform(csvRows) {
 
   const rows = [];
   let excluidasPorCod = 0;
+  let excluidasPorVista = 0;
   csvRows.forEach(r => {
     // Excluir organizaciones sin COD válido (#N/A, N/A, vacío, null)
     const cod = clean(r[cols.cod]);
@@ -551,6 +593,12 @@ function transform(csvRows) {
     const pais = clean(r[cols.pais]);
     const opMode = clean(r[cols.opMode]);
     if (!pais && !opMode) return;
+
+    // VISTA RESTRINGIDA: descartar filas que no sean del Operation mode permitido
+    if (opMode.toLowerCase() !== VISTA_OPMODE.toLowerCase()) {
+      excluidasPorVista++;
+      return;
+    }
 
     rows.push({
       cod: cod,
@@ -570,7 +618,7 @@ function transform(csvRows) {
     });
   });
 
-  console.log('Filas procesadas:', rows.length, '— Excluidas por COD inválido:', excluidasPorCod, '— Sample:', rows.slice(0, 2));
+  console.log('Filas procesadas:', rows.length, '— Excluidas por COD inválido:', excluidasPorCod, '— Excluidas por vista (Aliados DH / Operation mode = ' + VISTA_OPMODE + '):', excluidasPorVista, '— Sample:', rows.slice(0, 2));
 
   return {
     rows,
@@ -631,15 +679,42 @@ function boot() {
     'Actualizado ' + d.toLocaleString('es-AR', { dateStyle: 'medium', timeStyle: 'short' });
 
   // ── Leer parámetros de URL ──────────────────────────────
+  // Prioridad 1: hash con token opaco (#xxxxxxx) → busca en VISTAS
+  // Prioridad 2 (fallback): query string ?pais=...&red=... (admite listas separadas por coma)
   const qp = new URLSearchParams(window.location.search);
-  const LOCKED = {
-    pais:       qp.get('pais')       || null,
-    opmode:     qp.get('opmode')     || null,
-    red:        qp.get('red')        || null,
-    calendario: qp.get('calendario') || null,
-    mentor:     qp.get('mentor')     || null,
+  const parseList = (raw) => {
+    if (!raw) return null;
+    const arr = raw.split(',').map(s => s.trim()).filter(Boolean);
+    return arr.length ? arr : null;
   };
-  const hasLock = Object.values(LOCKED).some(v => v !== null);
+
+  const hashToken = (window.location.hash || '').replace(/^#/, '').trim().toLowerCase();
+  const vista = hashToken ? VISTAS[hashToken] : null;
+
+  if (vista) {
+    // Vista resuelta por token: usamos solo lo definido en el diccionario
+    LOCKED = {
+      pais:       vista.pais       || null,
+      opmode:     vista.opmode     || null,
+      red:        vista.red        || null,
+      calendario: vista.calendario || null,
+      mentor:     vista.mentor     || null,
+      _label:     vista.label      || null,
+    };
+  } else {
+    // Sin token válido → fallback a query params
+    LOCKED = {
+      pais:       parseList(qp.get('pais')),
+      opmode:     qp.get('opmode')     || null,
+      red:        parseList(qp.get('red')),
+      calendario: qp.get('calendario') || null,
+      mentor:     qp.get('mentor')     || null,
+      _label:     null,
+    };
+    // Si vino un hash que no matchea ninguna vista, lo logueamos para diagnóstico
+    if (hashToken) console.warn('Token de vista no reconocido:', hashToken, '— mostrando vista completa');
+  }
+  const hasLock = LOCKED.pais || LOCKED.opmode || LOCKED.red || LOCKED.calendario || LOCKED.mentor;
 
   // ── Poblar y configurar selectores ─────────────────────
   const selPais    = document.getElementById('f-pais');
@@ -649,23 +724,34 @@ function boot() {
   const selMentor    = document.getElementById('f-mentor');
   const selColegio   = document.getElementById('f-colegio');
 
+  // País y Operation mode siempre se pueblan con todos los valores del dataset
+  // (porque pueden estar bloqueados por la vista, pero si no, sirven como filtro libre).
   RAW.paises.forEach(p => selPais.appendChild(opt(p)));
   RAW.opModes.forEach(o => selOp.appendChild(opt(o)));
-  RAW.redes.forEach(r => selRed.appendChild(opt(r)));
-  RAW.calendarios.forEach(c => selCalendario.appendChild(opt(c)));
-  RAW.mentores.forEach(m => selMentor.appendChild(opt(m)));
-  RAW.colegios.forEach(c => selColegio.appendChild(opt(c)));
 
-  // Aplicar y bloquear los filtros que vienen de la URL
+  // Aplicar y bloquear los filtros que vienen de la URL.
+  // Si el valor es array (lista de múltiples valores), mostramos un texto
+  // resumen tipo "Honduras + 1 más" en el select, ya que un <select> simple
+  // no soporta multi-selección.
   const lockFilter = (sel, wrap, value) => {
     if (!value) return;
-    // Buscamos una opción que matchee (case-insensitive)
-    const match = [...sel.options].find(o => o.value.toLowerCase() === value.toLowerCase());
-    if (match) sel.value = match.value;
-    else {
-      // Si el valor no existe en las opciones, lo agregamos como opción
-      sel.appendChild(opt(value));
-      sel.value = value;
+    if (Array.isArray(value)) {
+      // Multi-valor: agregamos una opción virtual con el resumen
+      const label = value.length > 1
+        ? `${value[0]} + ${value.length - 1} más`
+        : value[0];
+      const virtualOpt = opt(label);
+      virtualOpt.value = '__locked_multi__';
+      sel.appendChild(virtualOpt);
+      sel.value = '__locked_multi__';
+    } else {
+      // Valor simple: comportamiento original
+      const match = [...sel.options].find(o => o.value.toLowerCase() === value.toLowerCase());
+      if (match) sel.value = match.value;
+      else {
+        sel.appendChild(opt(value));
+        sel.value = value;
+      }
     }
     wrap.classList.add('locked');
     sel.disabled = true;
@@ -673,20 +759,37 @@ function boot() {
 
   lockFilter(selPais,       document.getElementById('wrap-pais'),       LOCKED.pais);
   lockFilter(selOp,         document.getElementById('wrap-opmode'),     LOCKED.opmode);
+
+  // Red, Calendario, Mentor: poblar SOLO con valores que existen dentro de la vista
+  // (así el equipo Santillana no ve mentores/calendarios/redes que no aplican).
+  // getRowsEnVista() respeta los filtros bloqueados por URL (LOCKED.pais, LOCKED.red).
+  const rowsEnVista = getRowsEnVista();
+  uniqSorted(rowsEnVista.map(r => r.red).filter(Boolean)).forEach(r => selRed.appendChild(opt(r)));
+  uniqSorted(rowsEnVista.map(r => r.calendario).filter(Boolean)).forEach(c => selCalendario.appendChild(opt(c)));
+  uniqSorted(rowsEnVista.map(r => r.mentor).filter(m => m && m !== 'Sin asignar')).forEach(m => selMentor.appendChild(opt(m)));
+
+  // Aplicar bloqueos de Red / Calendario / Mentor (en ese orden, después de poblar)
   lockFilter(selRed,        document.getElementById('wrap-red'),        LOCKED.red);
   lockFilter(selCalendario, document.getElementById('wrap-calendario'), LOCKED.calendario);
   lockFilter(selMentor,     document.getElementById('wrap-mentor'),     LOCKED.mentor);
 
-  // Badge de vista bloqueada
-  if (hasLock) {
-    const labels = [];
-    if (LOCKED.opmode)     labels.push(LOCKED.opmode);
-    if (LOCKED.pais)       labels.push(LOCKED.pais);
-    if (LOCKED.red)        labels.push('Red: ' + LOCKED.red);
-    if (LOCKED.calendario) labels.push('Calendario: ' + LOCKED.calendario);
-    if (LOCKED.mentor)     labels.push('Mentor: ' + LOCKED.mentor);
+  // Badge permanente de Vista Aliados DH (+ filtros bloqueados por URL si los hay)
+  {
     const badge = document.getElementById('vista-badge');
-    badge.innerHTML = `<span class="badge-icon">🔍</span> Vista filtrada: <strong>${labels.join(' · ')}</strong>`;
+    if (LOCKED._label) {
+      // Vista por token: usamos el label del diccionario, que ya incluye país y red
+      badge.innerHTML = `<span class="badge-icon">🔒</span> Vista <strong>Aliados DH</strong> · ${LOCKED._label}`;
+    } else {
+      // Fallback (sin token o filtros por query string)
+      const labels = [];
+      const fmt = v => Array.isArray(v) ? v.join(' + ') : v;
+      if (LOCKED.pais)       labels.push(fmt(LOCKED.pais));
+      if (LOCKED.red)        labels.push('Red: ' + fmt(LOCKED.red));
+      if (LOCKED.calendario) labels.push('Calendario: ' + LOCKED.calendario);
+      if (LOCKED.mentor)     labels.push('Mentor: ' + LOCKED.mentor);
+      const sufijo = labels.length ? ' · ' + labels.join(' · ') : '';
+      badge.innerHTML = `<span class="badge-icon">🔒</span> Vista <strong>Aliados DH</strong>${sufijo}`;
+    }
     badge.classList.remove('hidden');
   }
 
@@ -739,10 +842,15 @@ function getFilteredRows() {
   const ca = document.getElementById('f-calendario').value;
   const m  = document.getElementById('f-mentor').value;
   const c  = document.getElementById('f-colegio').value.trim();
+
+  // Si el filtro está bloqueado por URL con múltiples valores, usamos la lista
+  const paisList = Array.isArray(LOCKED.pais) ? LOCKED.pais.map(v => v.toLowerCase()) : null;
+  const redList  = Array.isArray(LOCKED.red)  ? LOCKED.red.map(v => v.toLowerCase())  : null;
+
   return RAW.rows.filter(r =>
-    (p  === '__all__' || r.pais       === p)  &&
+    (paisList ? paisList.includes((r.pais || '').toLowerCase()) : (p  === '__all__' || r.pais === p)) &&
     (om === '__all__' || r.opMode     === om) &&
-    (rd === '__all__' || r.red        === rd) &&
+    (redList  ? redList.includes((r.red  || '').toLowerCase())  : (rd === '__all__' || r.red  === rd)) &&
     (ca === '__all__' || r.calendario === ca) &&
     (m  === '__all__' || r.mentor     === m)  &&
     (!c                || r.colegio   === c)
@@ -764,24 +872,31 @@ function render() {
 }
 
 function exportarPDF() {
-  // Título dinámico con los filtros activos
-  const partes = [];
-  const p  = document.getElementById('f-pais').value;
-  const om = document.getElementById('f-opmode').value;
-  const rd = document.getElementById('f-red').value;
-  const ca = document.getElementById('f-calendario').value;
-  const m  = document.getElementById('f-mentor').value;
-  const c  = document.getElementById('f-colegio').value.trim();
-  if (om !== '__all__') partes.push(om);
-  if (p  !== '__all__') partes.push(p);
-  if (rd !== '__all__') partes.push(rd);
-  if (ca !== '__all__') partes.push(ca);
-  if (m  !== '__all__') partes.push(m);
-  if (c)                partes.push(c);
-
-  const titulo = partes.length
-    ? 'Dashboard — ' + partes.join(' · ')
-    : 'Dashboard — Status consolidado';
+  // Si la vista viene de un token, usamos su label directamente
+  let titulo;
+  if (LOCKED._label) {
+    titulo = 'Aliados DH — ' + LOCKED._label;
+  } else {
+    // Fallback: armar título dinámico desde los filtros activos
+    const partes = [];
+    const p  = document.getElementById('f-pais').value;
+    const om = document.getElementById('f-opmode').value;
+    const rd = document.getElementById('f-red').value;
+    const ca = document.getElementById('f-calendario').value;
+    const m  = document.getElementById('f-mentor').value;
+    const c  = document.getElementById('f-colegio').value.trim();
+    const paisLabel = Array.isArray(LOCKED.pais) ? LOCKED.pais.join(' + ') : (p  !== '__all__' ? p  : null);
+    const redLabel  = Array.isArray(LOCKED.red)  ? LOCKED.red.join(' + ')  : (rd !== '__all__' ? rd : null);
+    if (om !== '__all__') partes.push(om);
+    if (paisLabel)        partes.push(paisLabel);
+    if (redLabel)         partes.push(redLabel);
+    if (ca !== '__all__') partes.push(ca);
+    if (m  !== '__all__') partes.push(m);
+    if (c)                partes.push(c);
+    titulo = partes.length
+      ? 'Aliados DH — ' + partes.join(' · ')
+      : 'Aliados DH — Status consolidado';
+  }
 
   const prevTitle = document.title;
   document.title = titulo;
@@ -789,30 +904,54 @@ function exportarPDF() {
   document.title = prevTitle;
 }
 
+// Devuelve las filas que entran en la vista actual (respetando los LOCKED
+// que vienen de la URL: pais, red, calendario, mentor). NO aplica los
+// filtros libres del usuario — para eso está getFilteredRows().
+function getRowsEnVista() {
+  if (!RAW) return [];
+  const paisList = Array.isArray(LOCKED.pais) ? LOCKED.pais.map(v => v.toLowerCase()) : null;
+  const redList  = Array.isArray(LOCKED.red)  ? LOCKED.red.map(v => v.toLowerCase())  : null;
+  const paisSingle = (typeof LOCKED.pais === 'string') ? LOCKED.pais.toLowerCase() : null;
+  const redSingle  = (typeof LOCKED.red  === 'string') ? LOCKED.red.toLowerCase()  : null;
+
+  return RAW.rows.filter(r => {
+    if (paisList && !paisList.includes((r.pais || '').toLowerCase())) return false;
+    if (paisSingle && (r.pais || '').toLowerCase() !== paisSingle) return false;
+    if (redList && !redList.includes((r.red || '').toLowerCase())) return false;
+    if (redSingle && (r.red || '').toLowerCase() !== redSingle) return false;
+    if (LOCKED.calendario && r.calendario !== LOCKED.calendario) return false;
+    if (LOCKED.mentor     && r.mentor     !== LOCKED.mentor)     return false;
+    return true;
+  });
+}
+
 function repoblarColegios() {
-  const input   = document.getElementById('f-colegio');
+  const input    = document.getElementById('f-colegio');
   const datalist = document.getElementById('list-colegios');
   const prev = input.value.trim();
 
   datalist.innerHTML = '';
 
+  // Punto de partida: solo filas dentro de la vista actual
+  let candidatos = getRowsEnVista();
+
+  // Aplicar también los filtros libres elegidos por el usuario
   const p  = document.getElementById('f-pais').value;
   const om = document.getElementById('f-opmode').value;
   const rd = document.getElementById('f-red').value;
   const ca = document.getElementById('f-calendario').value;
   const m  = document.getElementById('f-mentor').value;
 
+  // Solo aplicamos el filtro libre si NO está bloqueado por la vista
+  // (los bloqueados ya están aplicados en getRowsEnVista)
+  if (!LOCKED.pais       && p  !== '__all__') candidatos = candidatos.filter(r => r.pais       === p);
+  if (!LOCKED.opmode     && om !== '__all__') candidatos = candidatos.filter(r => r.opMode     === om);
+  if (!LOCKED.red        && rd !== '__all__') candidatos = candidatos.filter(r => r.red        === rd);
+  if (!LOCKED.calendario && ca !== '__all__') candidatos = candidatos.filter(r => r.calendario === ca);
+  if (!LOCKED.mentor     && m  !== '__all__') candidatos = candidatos.filter(r => r.mentor     === m);
+
   const colegiosVisibles = uniqSorted(
-    RAW.rows
-      .filter(r =>
-        (p  === '__all__' || r.pais       === p)  &&
-        (om === '__all__' || r.opMode     === om) &&
-        (rd === '__all__' || r.red        === rd) &&
-        (ca === '__all__' || r.calendario === ca) &&
-        (m  === '__all__' || r.mentor     === m)
-      )
-      .map(r => r.colegio)
-      .filter(c => c !== 'Sin nombre')
+    candidatos.map(r => r.colegio).filter(c => c !== 'Sin nombre')
   );
 
   colegiosVisibles.forEach(c => {
