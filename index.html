@@ -359,6 +359,25 @@
   .tm-counts .a { color: var(--amarillo); }
   .tm-counts .r { color: var(--rojo); }
   .tm-counts .s { color: var(--gris); }
+  .tm-flag {
+    font-size: 14px;
+    line-height: 1;
+    flex-shrink: 0;
+    margin-bottom: 2px;
+  }
+  .tm-dots {
+    display: flex;
+    gap: 3px;
+    flex-wrap: wrap;
+    margin-top: auto;
+    padding-top: 4px;
+  }
+  .tm-dot {
+    display: inline-block;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
   #tm-tooltip {
     position: fixed;
     background: var(--ink);
@@ -1085,12 +1104,25 @@ function renderSemOpMode(rows) {
   drawSemLegend('legend-sem');
 }
 
+const TM_FLAGS = {
+  'Argentina': '🇦🇷', 'Brasil': '🇧🇷', 'Brazil': '🇧🇷',
+  'Colombia': '🇨🇴', 'México': '🇲🇽', 'Mexico': '🇲🇽',
+  'Perú': '🇵🇪', 'Peru': '🇵🇪', 'Honduras': '🇭🇳',
+  'El Salvador': '🇸🇻', 'Chile': '🇨🇱', 'Uruguay': '🇺🇾',
+  'Paraguay': '🇵🇾', 'Bolivia': '🇧🇴', 'Ecuador': '🇪🇨',
+  'Venezuela': '🇻🇪', 'Guatemala': '🇬🇹', 'Costa Rica': '🇨🇷',
+  'Panamá': '🇵🇦', 'Panama': '🇵🇦', 'Nicaragua': '🇳🇮',
+  'República Dominicana': '🇩🇴', 'Puerto Rico': '🇵🇷',
+};
+const TM_MIN_W = 52, TM_MIN_H = 38;
+
 function renderSemPais(rows) {
   const groups = groupBy(rows, 'pais');
-  const data = Object.keys(groups).sort().map(pais => {
+  const allData = Object.keys(groups).sort().map(pais => {
     const rs = groups[pais];
     return {
       pais,
+      flag: TM_FLAGS[pais] || '🏳️',
       total:    rs.length,
       verde:    rs.filter(r => r.semaforo === 'verde').length,
       amarillo: rs.filter(r => r.semaforo === 'amarillo').length,
@@ -1102,13 +1134,25 @@ function renderSemPais(rows) {
   const container = document.getElementById('chart-sem-pais');
   if (!container) return;
   container.innerHTML = '';
-  if (!data.length) { container.innerHTML = '<div style="padding:20px;color:var(--ink-mute);text-align:center">Sin datos.</div>'; return; }
+  if (!allData.length) { container.innerHTML = '<div style="padding:20px;color:var(--ink-mute);text-align:center">Sin datos.</div>'; return; }
 
   const W = container.offsetWidth  || container.parentElement.offsetWidth  || 400;
   const H = container.offsetHeight || container.parentElement.offsetHeight || 280;
   if (W < 10 || H < 10) { setTimeout(() => renderSemPais(rows), 80); return; }
 
-  const rects = tmSquarify(data, 0, 0, W, H);
+  const grandTotal = allData.reduce((s, d) => s + d.total, 0);
+  const mapData = [], smallData = [];
+  allData.forEach(d => {
+    const fracW = W * (d.total / grandTotal);
+    const fracH = H * (d.total / grandTotal);
+    if (fracW < TM_MIN_W && fracH < TM_MIN_H) smallData.push(d);
+    else mapData.push(d);
+  });
+
+  const PANEL_W = smallData.length ? 56 : 0;
+  const mapW = W - PANEL_W;
+
+  const rects = tmSquarify(mapData, 0, 0, mapW, H);
   const GAP   = 3;
 
   const domColors = {
@@ -1128,10 +1172,12 @@ function renderSemPais(rows) {
     el.style.cssText = `left:${x+GAP/2}px;top:${y+GAP/2}px;width:${w-GAP}px;height:${h-GAP}px;background:${dc.bg};border:1.5px solid ${dc.border}40;`;
 
     const pct = k => d.total > 0 ? (d[k] / d.total * 100).toFixed(0) : 0;
-    const showBar    = w > 70  && h > 54;
-    const showCounts = w > 100 && h > 74;
+    const showBar    = w > 80  && h > 60;
+    const showCounts = w > 110 && h > 80;
+    const showFlag   = w > 36  && h > 28;
 
     el.innerHTML = `
+      ${showFlag ? `<div class="tm-flag">${d.flag}</div>` : ''}
       <div class="tm-name">${escapeHtml(d.pais)}</div>
       <div class="tm-total">${d.total}</div>
       ${showBar ? `<div class="tm-bar-wrap">
@@ -1142,18 +1188,59 @@ function renderSemPais(rows) {
           ${d.sin_dato ? `<span style="width:${pct('sin_dato')}%;background:${COLORS.sin_dato}"></span>` : ''}
         </div>
         ${showCounts ? `<div class="tm-counts">
-          ${d.verde    ? `<span class="v">▲${d.verde}</span>`    : ''}
+          ${d.verde    ? `<span class="v">●${d.verde}</span>`    : ''}
           ${d.amarillo ? `<span class="a">●${d.amarillo}</span>` : ''}
-          ${d.rojo     ? `<span class="r">▼${d.rojo}</span>`     : ''}
-          ${d.sin_dato ? `<span class="s">–${d.sin_dato}</span>` : ''}
+          ${d.rojo     ? `<span class="r">●${d.rojo}</span>`     : ''}
+          ${d.sin_dato ? `<span class="s">●${d.sin_dato}</span>` : ''}
         </div>` : ''}
-      </div>` : ''}
+      </div>` : `
+      <div class="tm-dots">
+        ${d.verde    ? `<span class="tm-dot" style="background:${COLORS.verde}"></span>`    : ''}
+        ${d.amarillo ? `<span class="tm-dot" style="background:${COLORS.amarillo}"></span>` : ''}
+        ${d.rojo     ? `<span class="tm-dot" style="background:${COLORS.rojo}"></span>`     : ''}
+        ${d.sin_dato ? `<span class="tm-dot" style="background:${COLORS.sin_dato}"></span>` : ''}
+      </div>`}
     `;
 
     el.addEventListener('mousemove', e => tmShowTooltip(e, d));
     el.addEventListener('mouseleave', tmHideTooltip);
     container.appendChild(el);
   });
+
+  if (smallData.length && PANEL_W > 0) {
+    const panel = document.createElement('div');
+    panel.style.cssText = `position:absolute;right:0;top:0;width:${PANEL_W}px;height:${H}px;display:flex;flex-direction:column;gap:3px;padding:2px 0 2px 3px;border-left:1px solid var(--line);`;
+
+    const itemH = Math.max(28, Math.floor((H - 4 - (smallData.length - 1) * 3) / smallData.length));
+
+    smallData.forEach(d => {
+      const dom = (['verde','amarillo','rojo','sin_dato']
+        .reduce((best, k) => d[k] > d[best] ? k : best, 'sin_dato'));
+      const dc = domColors[dom];
+
+      const item = document.createElement('div');
+      item.style.cssText = `flex-shrink:0;height:${itemH}px;background:${dc.bg};border:1.5px solid ${dc.border}40;border-radius:3px;padding:3px 5px;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;cursor:default;transition:filter .12s;`;
+      item.onmouseenter = function(){ this.style.filter='brightness(0.94)'; };
+      item.onmouseleave = function(){ this.style.filter=''; tmHideTooltip(); };
+
+      const dotsHtml = ['verde','amarillo','rojo','sin_dato']
+        .filter(k => d[k] > 0)
+        .map(k => `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${COLORS[k]};flex-shrink:0"></span>`)
+        .join('');
+
+      item.innerHTML = `
+        <div style="font-size:13px;line-height:1">${d.flag}</div>
+        <div style="font-size:8px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2">${escapeHtml(d.pais)}</div>
+        <div style="display:flex;gap:2px;flex-wrap:wrap;align-items:center">${dotsHtml}</div>
+      `;
+
+      item.addEventListener('mousemove', e => tmShowTooltip(e, d));
+      item.addEventListener('mouseleave', tmHideTooltip);
+      panel.appendChild(item);
+    });
+
+    container.appendChild(panel);
+  }
 }
 
 function tmShowTooltip(e, d) {
