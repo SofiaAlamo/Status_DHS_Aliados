@@ -292,6 +292,9 @@
   .vitalidad-bar { width: 50px; height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; position: relative; }
   .vitalidad-bar::after { content: ''; display: block; height: 100%; background: var(--dh-yellow); width: var(--w, 0%); }
 
+  .pais-cell { display: inline-flex; align-items: center; gap: 8px; line-height: 1; }
+  .pais-flag { font-size: 1.05em; line-height: 1; font-family: "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji","Twemoji Mozilla",sans-serif; }
+
   .sem-stack { display: inline-flex; align-items: center; gap: 10px; width: 100%; }
   .sem-stack-bar { display: flex; height: 10px; width: 140px; border-radius: 3px; overflow: hidden; background: var(--line); flex-shrink: 0; }
   .sem-stack-bar > span { display: block; height: 100%; transition: width .2s; }
@@ -1682,7 +1685,7 @@ function renderColegios(rowsArg) {
     return `
       <tr>
         <td>${escapeHtml(r.colegio)}</td>
-        <td>${escapeHtml(r.pais)}</td>
+        <td><span class="pais-cell"><span class="pais-flag" aria-hidden="true">${TM_FLAGS[r.pais] || '🏳️'}</span>${escapeHtml(r.pais)}</span></td>
         <td>${escapeHtml(r.opMode)}</td>
         <td>${escapeHtml(r.mentor)}</td>
         <td class="center"><span class="sem-dot ${r.semaforo}" title="${SEM_LABELS[r.semaforo]}"></span></td>
