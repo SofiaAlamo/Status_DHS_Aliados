@@ -160,6 +160,7 @@ footer{margin-top:50px;padding-top:20px;border-top:1px solid var(--line);font-si
 .qpct{font-size:11px;color:var(--muted);font-weight:600;font-variant-numeric:tabular-nums}
 .qbase{font-size:10px;color:var(--muted);font-weight:500;margin-left:6px;text-transform:none;letter-spacing:0}
 .qcol .cnt{background:var(--muted)}
+.paislock{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:6px;background:var(--ink);color:#fff;font-size:13px;font-weight:700;letter-spacing:.02em}
 @media print{.gfilters,.tcontrols,.thint{display:none}body{background:#fff}}
 </style></head>
 <body>
@@ -280,7 +281,17 @@ function applySig(r){
   if(out.dsec && (!r.gsec || r.gsec.n < SIG_MIN)) out.dsec=null;
   return out;
 }
-function scopeRows(){return ALL.filter(r=>(!fPais||r.pais===fPais)&&(!fOp||r.op===fOp)&&(!fRed||r.red===fRed)).map(applySig);}
+function _mp(r){ // match país
+  if(LOCK_PAISES && LOCK_PAISES.length>1) return LOCK_PAISES.includes(r.pais);
+  return !fPais || r.pais===fPais;
+}
+function _mr(r){ // match red
+  if(LOCK_REDES && LOCK_REDES.length>1) return LOCK_REDES.includes(r.red);
+  if(LOCK_REDES && LOCK_REDES.length===1) return r.red===LOCK_REDES[0];
+  return !fRed || r.red===fRed;
+}
+function _mo(r){ return !fOp || r.op===fOp; }
+function scopeRows(){return ALL.filter(r=>_mp(r)&&_mo(r)&&_mr(r)).map(applySig);}
 
 // ---------- KPIS ----------
 function tone(v){return v>=50?'g':v>=30?'a':'r';}
@@ -383,7 +394,7 @@ function stack(title,q,parts,colors){const tot=parts.reduce((a,b)=>a+b.v,0);cons
 
 // ---------- IMPACT (static) ----------
 const FL=D.filterable;
-function flScope(arr){return arr.filter(r=>(!fPais||r.pais===fPais)&&(!fOp||r.op===fOp)&&(!fRed||r.red===fRed));}
+function flScope(arr){return arr.filter(r=>_mp(r)&&_mo(r)&&_mr(r));}
 function aggTheme(rows){let base=0;const tot={};rows.forEach(r=>{base+=r.base;for(const k in r.opts)tot[k]=(tot[k]||0)+r.opts[k];});const items=Object.entries(tot).map(([k,v])=>({k,v})).sort((a,b)=>b.v-a.v);return {base,items};}
 
 // IMPACTO directivos (filtrable)
@@ -483,7 +494,11 @@ function renderTable(){
 function renderScope(){
   const rows=scopeRows();
   const parts=[];
-  if(fPais)parts.push(fPais);if(fOp)parts.push('modo '+fOp);if(fRed)parts.push('red '+fRed);if(fSig)parts.push('estudiantes N≥20');
+  if(LOCK_PAISES&&LOCK_PAISES.length>1)parts.push(LOCK_PAISES.join(' + '));
+  else if(fPais)parts.push(fPais);
+  if(LOCK_REDES&&LOCK_REDES.length>1)parts.push('redes '+LOCK_REDES.join(' + '));
+  else if(fRed)parts.push('red '+fRed);
+  if(fOp)parts.push('modo '+fOp);if(fSig)parts.push('estudiantes N≥20');
   const txt=parts.length?parts.join(' · '):'todos los colegios';
   document.getElementById('scope').innerHTML=`Mostrando <b>${rows.length}</b> colegios — <b>${txt}</b>`;
 }
@@ -511,10 +526,55 @@ document.getElementById('fPais').addEventListener('change',e=>{fPais=e.target.va
 document.getElementById('fOp').addEventListener('change',e=>{fOp=e.target.value;refreshRedSelect();renderAll();});
 document.getElementById('fRed').addEventListener('change',e=>{fRed=e.target.value;renderAll();});
 document.getElementById('fSig').addEventListener('change',e=>{fSig=e.target.checked;renderAll();});
-document.getElementById('reset').addEventListener('click',()=>{fPais=fOp=fRed='';fSig=false;document.getElementById('fPais').value='';document.getElementById('fOp').value='';document.getElementById('fSig').checked=false;refreshRedSelect();renderAll();});
+document.getElementById('reset').addEventListener('click',()=>{if(!TOKEN_LOCK)fPais='';fOp=fRed='';fSig=false;document.getElementById('fPais').value='';document.getElementById('fOp').value='';document.getElementById('fSig').checked=false;refreshRedSelect();renderAll();});
 document.getElementById('search').addEventListener('input',e=>{q=e.target.value.toLowerCase();renderTable();});
 document.querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>{document.querySelectorAll('.chip').forEach(x=>x.classList.remove('on'));c.classList.add('on');tfilter=c.dataset.f;renderTable();}));
 document.querySelectorAll('thead th[data-s]').forEach(th=>th.addEventListener('click',()=>{const k=th.dataset.s;if(sortKey===k)sortDir*=-1;else{sortKey=k;sortDir=k==='esc'?1:-1;}renderTable();}));
+
+
+// ---- Token de acceso por referente (mismo diccionario que el Status) ----
+const VISTAS={
+  '2b5prxa':{label:'Aliados DH (todo)'},
+  '4mm9yc8':{label:'Argentina',pais:['Argentina']},
+  '4bqe396':{label:'Colombia (todo)',pais:['Colombia']},
+  'wmjup9v':{label:'Colombia · Norma',pais:['Colombia'],red:['Norma']},
+  '7a83qts':{label:'Colombia · Sumun Norma',pais:['Colombia'],red:['Sumun Norma']},
+  '508mbyu':{label:'Colombia · Norma + Sumun Norma',pais:['Colombia'],red:['Norma','Sumun Norma']},
+  'tbe2dc4':{label:'Colombia · Compartir',pais:['Colombia'],red:['Compartir']},
+  'ywvsvbu':{label:'Colombia · UNOi',pais:['Colombia'],red:['UNOi']},
+  'ahzfjue':{label:'Colombia · Sumun Santillana',pais:['Colombia'],red:['Sumun Santillana']},
+  '7nfx5ak':{label:'Colombia · Santillana (UNOi + Compartir + Sumun Santillana)',pais:['Colombia'],red:['UNOi','Compartir','Sumun Santillana']},
+  'zsdpgvd':{label:'México (todo)',pais:['México']},
+  'tntxvmw':{label:'México · UNOi',pais:['México'],red:['UNOi']},
+  'f3xrzn6':{label:'México · Compartir',pais:['México'],red:['Compartir']},
+  'hsatwhy':{label:'México · Mercado didáctico',pais:['México'],red:['Mercado didáctico']},
+  'zbr6p5z':{label:'CAN (Honduras + El Salvador)',pais:['Honduras','El Salvador']},
+  'txv6n6r':{label:'Perú',pais:['Perú']},
+};
+let TOKEN_LOCK=false, LOCK_PAISES=null, LOCK_REDES=null;
+(function applyToken(){
+  // token viene en el hash (#xxxxx) o en ?t= como fallback
+  let t=(window.location.hash||'').replace('#','').trim();
+  if(!t){const p=new URLSearchParams(window.location.search);t=(p.get('t')||'').trim();}
+  const v=VISTAS[t];
+  if(!v || (!v.pais && !v.red)) return; // sin token o vista "todo": no lockea
+  TOKEN_LOCK=true;
+  LOCK_PAISES=v.pais||null;
+  LOCK_REDES=v.red||null;
+  if(LOCK_PAISES) fPais = LOCK_PAISES.length===1 ? LOCK_PAISES[0] : '';
+  if(LOCK_REDES)  fRed  = LOCK_REDES.length===1  ? LOCK_REDES[0]  : '';
+  // ocultar selectores lockeados y poner chip
+  const selP=document.getElementById('fPais'), selR=document.getElementById('fRed');
+  if(LOCK_PAISES){
+    selP.style.display='none';
+    const chip=document.createElement('span');chip.className='paislock';
+    chip.textContent='📍 '+(v.label||LOCK_PAISES.join(' + '));
+    selP.parentNode.insertBefore(chip,selP);
+  }
+  if(LOCK_REDES){
+    if(selR) selR.style.display='none';
+  }
+})();
 
 renderAll();
 </script></body></html>

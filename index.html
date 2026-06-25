@@ -128,24 +128,15 @@
   }
   .export-btn:hover { background: #ffd55a; transform: translateY(-1px); }
 
-  /* Botón Encuestas 2026 – acceso secundario */
+  /* Botón Encuestas 2026 */
   .encuestas-btn {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    background: transparent;
-    color: var(--dh-yellow);
+    display: flex; align-items: center; gap: 7px;
+    background: transparent; color: var(--dh-yellow);
     border: 1.5px solid var(--dh-yellow);
-    padding: 10px 20px;
-    border-radius: 50px;
-    font-family: var(--sans);
-    font-size: 13px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: background .15s, color .15s, transform .1s;
-    white-space: nowrap;
-    letter-spacing: 0.02em;
-    text-decoration: none;
+    padding: 10px 20px; border-radius: 50px;
+    font-family: var(--sans); font-size: 13px; font-weight: 700;
+    cursor: pointer; transition: background .15s, color .15s, transform .1s;
+    white-space: nowrap; letter-spacing: 0.02em; text-decoration: none;
   }
   .encuestas-btn:hover { background: var(--dh-yellow); color: var(--dh-black); transform: translateY(-1px); }
 
@@ -459,7 +450,7 @@
           <div><span class="dot"></span>Datos en vivo desde Google Sheets</div>
           <div id="meta-updated">Actualizando…</div>
         </div>
-        <a class="encuestas-btn" href="encuestas-2026.html">
+        <a class="encuestas-btn" id="btn-encuestas" href="encuestas-2026.html">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
           Ver Resultados Encuestas 2026
         </a>
@@ -1733,6 +1724,19 @@ function mixColor(c1, c2, t) {
   return `rgb(${Math.round(a.r + (b.r - a.r) * t)},${Math.round(a.g + (b.g - a.g) * t)},${Math.round(a.b + (b.b - a.b) * t)})`;
 }
 function hexToRgb(hex) { const h = hex.replace('#',''); return { r: parseInt(h.substring(0,2), 16), g: parseInt(h.substring(2,4), 16), b: parseInt(h.substring(4,6), 16) }; }
+
+// Propagar el token del hash al botón de encuestas
+(function(){
+  function setEncuestasLink(){
+    const a=document.getElementById('btn-encuestas');
+    if(!a) return;
+    const h=(window.location.hash||'').replace('#','').trim();
+    a.href = h ? ('encuestas-2026.html#'+h) : 'encuestas-2026.html';
+  }
+  setEncuestasLink();
+  window.addEventListener('hashchange', setEncuestasLink);
+})();
+
 </script>
 </body>
 </html>
