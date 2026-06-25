@@ -266,6 +266,7 @@ function aggAvg(rows,key){ // 1-5 -> solo avg
 }
 
 let fPais='',fOp='',fRed='',fSig=false;
+let TOKEN_LOCK=false, LOCK_PAISES=null, LOCK_REDES=null;
 const SIG_MIN=20; // umbral de respuestas estudiantiles por colegio
 function applySig(r){
   // El toggle SOLO afecta estudiantes: descarta primaria/secundaria con muestra chica.
@@ -513,16 +514,28 @@ function renderAll(){
 function fill(sel,arr,allLabel){sel.innerHTML=`<option value="">${allLabel}</option>`+arr.map(x=>`<option value="${x}">${x}</option>`).join('');}
 fill(document.getElementById('fPais'),g.paises,'Todos los países');
 fill(document.getElementById('fOp'),g.opmodes,'Toda modalidad');
-function redOptions(){return fOp&&g.op_red[fOp]?g.op_red[fOp]:g.redes;}
+function redOptions(){
+  // redes realmente presentes en el recorte activo (país + modalidad)
+  const set=new Set();
+  ALL.forEach(r=>{
+    if(!r.red)return;
+    if(fPais && r.pais!==fPais)return;
+    if(LOCK_PAISES && LOCK_PAISES.length>1 && !LOCK_PAISES.includes(r.pais))return;
+    if(fOp && r.op!==fOp)return;
+    set.add(r.red);
+  });
+  return [...set].sort();
+}
 function refreshRedSelect(){
   const sel=document.getElementById('fRed');
-  // si la red elegida no pertenece a la modalidad, resetear
-  if(fRed&&fOp&&!(g.op_red[fOp]||[]).includes(fRed))fRed='';
-  fill(sel,redOptions(),'Toda red');
+  const opts=redOptions();
+  // si la red elegida ya no está disponible en el recorte, resetear
+  if(fRed && !opts.includes(fRed))fRed='';
+  fill(sel,opts,'Toda red');
   sel.value=fRed;
 }
 refreshRedSelect();
-document.getElementById('fPais').addEventListener('change',e=>{fPais=e.target.value;renderAll();});
+document.getElementById('fPais').addEventListener('change',e=>{fPais=e.target.value;refreshRedSelect();renderAll();});
 document.getElementById('fOp').addEventListener('change',e=>{fOp=e.target.value;refreshRedSelect();renderAll();});
 document.getElementById('fRed').addEventListener('change',e=>{fRed=e.target.value;renderAll();});
 document.getElementById('fSig').addEventListener('change',e=>{fSig=e.target.checked;renderAll();});
@@ -551,7 +564,6 @@ const VISTAS={
   'zbr6p5z':{label:'CAN (Honduras + El Salvador)',pais:['Honduras','El Salvador']},
   'txv6n6r':{label:'Perú',pais:['Perú']},
 };
-let TOKEN_LOCK=false, LOCK_PAISES=null, LOCK_REDES=null;
 (function applyToken(){
   // token viene en el hash (#xxxxx) o en ?t= como fallback
   let t=(window.location.hash||'').replace('#','').trim();
@@ -573,6 +585,9 @@ let TOKEN_LOCK=false, LOCK_PAISES=null, LOCK_REDES=null;
   }
   if(LOCK_REDES){
     if(selR) selR.style.display='none';
+  } else {
+    // token con país pero sin red fija: mostrar solo las redes de ese país
+    refreshRedSelect();
   }
 })();
 
