@@ -429,6 +429,58 @@
     .card:nth-child(n+5) { page-break-before: auto; }
     .card:has(#tbl-colegios) { page-break-before: always !important; grid-column: span 2 !important; }
   }
+
+  /* ═══ PESTAÑAS + KICK-OFF ═══ */
+  .tabbar { display: flex; gap: 4px; padding: 20px 0 0; }
+  .tabbar .tab { font-family: var(--cond); font-weight: 700; font-size: 16px; letter-spacing: .04em; text-transform: uppercase; color: rgba(255,255,255,.55); background: transparent; border: none; border-bottom: 3px solid transparent; padding: 12px 20px; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+  .tabbar .tab .tabpill { font-size: 12px; font-weight: 700; background: rgba(255,255,255,.12); color: #fff; border-radius: 50px; padding: 1px 9px; }
+  .tabbar .tab:hover { color: #fff; }
+  .tabbar .tab.active { color: var(--dh-yellow); border-bottom-color: var(--dh-yellow); }
+  .tabbar .tab.active .tabpill { background: var(--dh-yellow); color: var(--dh-black); }
+  .chip-piloto { display: inline-block; font-size: 9.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; background: #e8f0fb; color: #2c5a99; border-radius: 50px; padding: 1px 7px; margin-left: 6px; vertical-align: middle; }
+  #tab-onb { margin-top: 8px; }
+  .onb-loading, .onb-error { padding: 40px; text-align: center; color: var(--ink-mute); }
+  .onb-error { color: var(--rojo); }
+  .onb-filters { margin: 4px 0 20px; }
+  .onb-filters .stat-note, .filter-stats .stat-note { display: block; font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--ink-mute); font-size: 9.5px; margin-top: 1px; }
+  .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 16px 0 22px; }
+  .kpi-card { background: var(--bg-card); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; box-shadow: 0 1px 4px rgba(0,0,0,.05); }
+  .kpi-card .k-num { font-family: var(--cond); font-size: 30px; font-weight: 700; line-height: 1; color: var(--dh-black); }
+  .kpi-card .k-lbl { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--ink-mute); margin-top: 6px; }
+  .kpi-card .k-sub { font-size: 11px; color: var(--ink-mute); margin-top: 3px; min-height: 14px; }
+  .funnel-steps { display: flex; align-items: stretch; margin: 14px 0 4px; }
+  .fstep { flex: 1; position: relative; padding: 16px 18px; border: 1px solid #d7dde6; }
+  .fstep.s1 { background: #f4f6f9; border-radius: 8px 0 0 8px; }
+  .fstep.s2 { background: #e8edf4; padding-left: 28px; }
+  .fstep.s3 { background: #dbe3ef; border-radius: 0 8px 8px 0; padding-left: 28px; }
+  .fstep::after { content: ''; position: absolute; right: -11px; top: 50%; transform: translateY(-50%) rotate(45deg); width: 20px; height: 20px; background: inherit; border-right: 1px solid #d7dde6; border-top: 1px solid #d7dde6; z-index: 2; }
+  .fstep.s3::after { display: none; }
+  .fstep .fs-n { font-family: var(--cond); font-size: 32px; font-weight: 700; line-height: 1; color: #2c3a54; }
+  .fstep .fs-t { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: #5a6b8c; font-weight: 700; margin-top: 8px; }
+  .fstep .fs-d { font-size: 11px; color: var(--ink-mute); margin-top: 3px; }
+  .block2 { margin-top: 24px; border: 1px solid #d7dde6; border-radius: var(--radius); background: #fbfcfd; padding: 22px 26px; }
+  .section-title2 { font-family: var(--cond); font-weight: 700; font-size: 19px; letter-spacing: .04em; text-transform: uppercase; color: #33415c; margin: 0 0 6px; }
+  .b2-explainer { background: #eef2f7; border-left: 3px solid #5a6b8c; border-radius: 0 4px 4px 0; padding: 12px 16px; font-size: 13px; color: #3a4763; margin: 6px 0 18px; line-height: 1.55; }
+  .onb-table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  .onb-table th, .onb-table td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-size: 13px; }
+  .onb-table th { font-size: 10px; text-transform: uppercase; letter-spacing: .1em; color: #5a6b8c; font-weight: 700; background: #eef2f7; white-space: nowrap; }
+  .onb-table th.num, .onb-table td.num { text-align: right; }
+  .onb-table tbody tr:hover { background: #f1f5fb; }
+  .onb-table tbody tr:last-child td { border-bottom: none; }
+  .onb-table .sin-plat { color: #c4c9d0; }
+  .epill { display: inline-block; padding: 3px 10px; border-radius: 50px; font-size: 11.5px; font-weight: 600; color: #1a1a1a; background: #f2c94c; }
+  .tpill { display: inline-block; padding: 2px 9px; border-radius: 50px; font-size: 11px; font-weight: 700; letter-spacing: .03em; }
+  .tpill.reno { background: #e8eef7; color: #33507d; }
+  .tpill.conq { background: #e7f5ec; color: #1e7a45; }
+  .tpill.sd { background: #efefef; color: #888; }
+  .hitos { display: inline-flex; gap: 4px; align-items: center; }
+  .hito { padding: 2px 8px; border-radius: 4px; font-size: 10.5px; font-weight: 600; }
+  .hito.done { background: #e7f5ec; color: #1e7a45; }
+  .hito.prog { background: #fdf3d6; color: #8a6d12; }
+  .hito.pend { background: #f1f1f1; color: #999; }
+  .hsep { display: inline-block; width: 1px; height: 16px; background: #d4d9e0; margin: 0 2px; }
+  .onb-note { font-size: 11.5px; color: var(--ink-mute); margin-top: 12px; }
+  .onb-legend { font-size: 11.5px; color: var(--ink-mute); margin-top: 12px; display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
 </style>
 </head>
 <body>
@@ -460,6 +512,10 @@
         </button>
       </div>
     </header>
+    <nav class="tabbar">
+      <button class="tab active" data-tab="impl">Implementación · ciclo activo <span class="tabpill" id="tabpill-impl">—</span></button>
+      <button class="tab" data-tab="onb">Kick-off próximo ciclo <span class="tabpill" id="tabpill-onb">…</span></button>
+    </nav>
   </div>
 </div>
 
@@ -551,6 +607,10 @@
       </article>
     </div>
   </main>
+
+  <section id="tab-onb" class="hidden">
+    <div id="onb-content"><div class="onb-loading">Cargando datos de kick-off…</div></div>
+  </section>
 </div>
 
 <script>
@@ -617,6 +677,7 @@ const COLORS = {
 const SEM_LABELS = { verde: 'Sin alarmas', amarillo: 'Seguimiento en alerta', rojo: 'Implementación frenada', sin_dato: 'Sin dato' };
 
 let RAW = null;
+let NATIVA_CODS = new Set();
 let CHARTS = {};
 let SORT_STATE = { col: 'estudiantes', dir: 'desc' };
 let SORT_STATE_COL = { col: 'estudiantes', dir: 'desc' };
@@ -685,12 +746,14 @@ function transform(csvRows) {
     docentes:     find('Docentes en PLD', 'Cantidad de Docentes en PLD'),
     mentor:       find('Mentor'),
     colegio:      find('Nombre en PG', 'Nombre en PG del Colegio'),
-    comentarios:  find('Comentarios')
+    comentarios:  find('Comentarios'),
+    etapa:        find('Etapa de implementación', 'Etapa de implementacion', 'Etapa ciclo', 'Etapa de ciclo')
   };
 
   console.log('Columnas mapeadas:', cols);
 
   const rows = [];
+  NATIVA_CODS = new Set();
   let excluidasPorCod = 0;
   let excluidasPorVista = 0;
   csvRows.forEach(r => {
@@ -708,6 +771,7 @@ function transform(csvRows) {
 
     // VISTA RESTRINGIDA: descartar filas que no sean del Operation mode permitido
     if (opMode.toLowerCase() !== VISTA_OPMODE.toLowerCase()) {
+      NATIVA_CODS.add(codNorm);
       excluidasPorVista++;
       return;
     }
@@ -726,20 +790,28 @@ function transform(csvRows) {
       docentesPLD: parseNum(r[cols.docentes]),
       mentor: clean(r[cols.mentor]) || 'Sin asignar',
       colegio: clean(r[cols.colegio]) || 'Sin nombre',
-      comentarios: clean(r[cols.comentarios]) || ''
+      comentarios: clean(r[cols.comentarios]) || '',
+      etapa: clean(r[cols.etapa]) || 'Sin dato'
     });
   });
 
   console.log('Filas procesadas:', rows.length, '— Excluidas por COD inválido:', excluidasPorCod, '— Excluidas por vista (Aliados DH / Operation mode = ' + VISTA_OPMODE + '):', excluidasPorVista, '— Sample:', rows.slice(0, 2));
 
+  const ACTIVAS = new Set(['ciclo academico activo', 'piloto en curso']);
+  const hayEtapa = rows.some(r => r.etapa && normKey(r.etapa) !== 'sin dato');
+  const esActiva = r => ACTIVAS.has(normKey(r.etapa));
+  const rowsActivos = hayEtapa ? rows.filter(esActiva) : rows;
+  const rowsNoActivos = hayEtapa ? rows.filter(r => !esActiva(r)) : [];
+
   return {
-    rows,
-    paises:   uniqSorted(rows.map(r => r.pais)),
-    opModes:  uniqSorted(rows.map(r => r.opMode)),
-    redes:      uniqSorted(rows.map(r => r.red)),
-    calendarios: uniqSorted(rows.map(r => r.calendario)),
-    mentores: uniqSorted(rows.map(r => r.mentor).filter(m => m !== 'Sin asignar')),
-    colegios: uniqSorted(rows.map(r => r.colegio).filter(c => c !== 'Sin nombre')),
+    rows: rowsActivos,
+    rowsNoActivos: rowsNoActivos,
+    paises:   uniqSorted(rowsActivos.map(r => r.pais)),
+    opModes:  uniqSorted(rowsActivos.map(r => r.opMode)),
+    redes:      uniqSorted(rowsActivos.map(r => r.red)),
+    calendarios: uniqSorted(rowsActivos.map(r => r.calendario)),
+    mentores: uniqSorted(rowsActivos.map(r => r.mentor).filter(m => m !== 'Sin asignar')),
+    colegios: uniqSorted(rowsActivos.map(r => r.colegio).filter(c => c !== 'Sin nombre')),
     generatedAt: new Date().toISOString()
   };
 }
@@ -949,6 +1021,11 @@ function boot() {
     clearTimeout(window._tmResize);
     window._tmResize = setTimeout(() => { if (RAW) renderSemPais(getFilteredRows()); }, 150);
   });
+
+  const pill1 = document.getElementById('tabpill-impl');
+  if (pill1) pill1.textContent = RAW.rows.length;
+  setupTabs();
+  loadOnboarding().catch(e => console.error('Onboarding:', e));
 }
 
 function opt(v) { const o = document.createElement('option'); o.value = v; o.textContent = v; return o; }
@@ -1699,7 +1776,7 @@ function renderColegios(rowsArg) {
          </span>`;
     return `
       <tr>
-        <td>${escapeHtml(r.colegio)}</td>
+        <td>${escapeHtml(r.colegio)}${normKey(r.etapa) === 'piloto en curso' ? ' <span class="chip-piloto">Piloto</span>' : ''}</td>
         <td>${escapeHtml(r.pais)}</td>
         <td>${escapeHtml(r.opMode)}</td>
         <td>${escapeHtml(r.mentor)}</td>
@@ -1737,6 +1814,228 @@ function hexToRgb(hex) { const h = hex.replace('#',''); return { r: parseInt(h.s
   window.addEventListener('hashchange', setEncuestasLink);
 })();
 
+
+/* ═══════════════ PESTAÑA 2 · KICK-OFF (Santillana · sin Nativa · filtrado por token) ═══════════════ */
+let KICK_ALL = [];
+const CSV_URL_KICKOFF = [
+  'https://docs.google.com/spreadsheets/d/e/2PACX-1vRYsEq-7FPL5R44JsAgcsTrZaXSFIVYLRsczRnmlkTTSNXgBop_PJ25T1fj_PsylH5CLjWk_YEogwAr/pub?gid=0&single=true&output=csv',
+  'https://docs.google.com/spreadsheets/d/e/2PACX-1vR_ecl_xDRnxHWM2dkkxkBakW4VDGuFVU7P1n2c79LZtLbeu2JtetmmYLgedZg4zNlXyw_Xn183X1_u/pub?gid=0&single=true&output=csv',
+  'https://docs.google.com/spreadsheets/d/e/2PACX-1vR_ecl_xDRnxHWM2dkkxkBakW4VDGuFVU7P1n2c79LZtLbeu2JtetmmYLgedZg4zNlXyw_Xn183X1_u/pub?gid=723962439&single=true&output=csv'
+];
+
+function setupTabs() {
+  document.querySelectorAll('.tabbar .tab').forEach(t => t.addEventListener('click', () => switchTab(t.dataset.tab)));
+}
+function switchTab(name) {
+  document.querySelectorAll('.tabbar .tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+  const dash = document.getElementById('dashboard');
+  const onb  = document.getElementById('tab-onb');
+  if (dash) dash.classList.toggle('hidden', name !== 'impl');
+  if (onb)  onb.classList.toggle('hidden',  name !== 'onb');
+}
+
+function kickEnVista(k) {
+  if (LOCKED.pais) {
+    const paisList = (Array.isArray(LOCKED.pais) ? LOCKED.pais : [LOCKED.pais]).map(x => normKey(x));
+    const origenMap = { 'mexico': ['mexico'], 'colombia': ['colombia'], 'can': ['honduras', 'el salvador'] };
+    const cand = [normKey(k.pais)].concat(origenMap[normKey(k.origen)] || [normKey(k.origen)]);
+    if (!cand.some(p => paisList.includes(p))) return false;
+  }
+  if (LOCKED.red) {
+    const redList = (Array.isArray(LOCKED.red) ? LOCKED.red : [LOCKED.red]).map(x => normKey(x));
+    if (!redList.includes(normKey(k.sistema))) return false;
+  }
+  return true;
+}
+
+async function loadOnboarding() {
+  const cont = document.getElementById('onb-content');
+  try {
+    const ORIG = ['México', 'CAN', 'Colombia'];
+    const texts = await Promise.all(CSV_URL_KICKOFF.map(async u => { const res = await fetch(u); if (!res.ok) throw new Error('HTTP ' + res.status); return res.text(); }));
+    const raw = [];
+    texts.forEach((t, i) => { parseKickoff(t).forEach(r => { r.__origen = ORIG[i]; raw.push(r); }); });
+    KICK_ALL = mapKick(raw).filter(k => k.op !== 'Baja');
+    const codKey = c => String(c || '').toUpperCase().replace(/\s+/g, '');
+    const statusByCod = {};
+    (RAW ? (RAW.rows || []).concat(RAW.rowsNoActivos || []) : []).forEach(s => { if (s.cod) statusByCod[codKey(s.cod)] = s; });
+    KICK_ALL.forEach(k => { const m = statusByCod[codKey(k.cod)]; k.docentesPLD = m ? m.docentesPLD : null; k.vitalidad = m ? m.vitalidad : null; k.pais = m ? m.pais : k.origen; k.enPlataforma = !!m; });
+    KICK_ALL = KICK_ALL.filter(k => !NATIVA_CODS.has(codKey(k.cod)) && normKey(k.sistema) !== 'nativa').filter(kickEnVista);
+    buildOnbShell();
+    renderOnbBody();
+  } catch (err) {
+    console.error('Onboarding:', err);
+    if (cont) cont.innerHTML = '<div class="onb-error">No se pudieron cargar los datos de kick-off.<br><small>' + escapeHtml(err.message || String(err)) + '</small></div>';
+  }
+}
+
+function pldAceptada(v) { return normKey(v).includes('invitacion aceptada'); }
+
+function parseKickoff(text) {
+  const arr = (Papa.parse(text, { skipEmptyLines: true }).data) || [];
+  let hi = arr.findIndex(row => Array.isArray(row) && row.some(c => normKey(c) === 'cod'));
+  if (hi < 0) hi = 0;
+  const headers = (arr[hi] || []).map(h => String(h == null ? '' : h).trim());
+  return arr.slice(hi + 1).map(r => {
+    const o = {}; headers.forEach((h, i) => { if (h) o[h] = r[i]; }); return o;
+  }).filter(o => {
+    const cod = clean(o[pick(headers, 'COD')]);
+    const cn = cod.toUpperCase().replace(/\s+/g, '');
+    return cod && cn !== 'N/A' && cn !== '#N/A' && cn !== 'NA' && cn !== '#NA';
+  });
+}
+
+function pick(headers, ...cands) {
+  for (const c of cands) { if (headers.includes(c)) return c; }
+  for (const c of cands) { const s = normKey(c); const h = headers.find(x => normKey(x) === s); if (h) return h; }
+  return null;
+}
+function kbool(v) { return ['true','verdadero','si','sí','x','1','ok','listo','completado','hecho','realizado'].includes(normKey(v)); }
+function tipoOp(v) {
+  const s = normKey(v);
+  if (s.includes('renov')) return 'Renovación';
+  if (s.includes('conquist') || s.includes('nuevo')) return 'Conquista';
+  if (s.includes('baja')) return 'Baja';
+  return 'Sin dato';
+}
+
+function mapKick(rows) {
+  const H = rows.length ? Object.keys(rows[0]).filter(k => k !== '__origen') : [];
+  const c = {
+    sist: pick(H,'Sistema'), cod: pick(H,'COD'), col: pick(H,'Colegio','Nombre Normalizado Colegio'),
+    ment: pick(H,'Mentor'), sub: pick(H,'Subetapa de implementación','Subetapa de implementacion'),
+    op: pick(H,'Tipo de operación','Tipo de operacion'), contrato: pick(H,'Contrato'),
+    bien: pick(H,'Onboarding y bienvenida'), minuta: pick(H,'Minuta enviado'), pld: pick(H,'Status PLD'),
+    diag: pick(H,'Diagnóstico','Diagnostico'), rol: pick(H,'Rol admin e inicio mentoría','Rol admin e inicio mentoria')
+  };
+  return rows.map(r => {
+    const statusPLD = r[c.pld];
+    const rolDone = kbool(r[c.rol]);
+    const pldAcc = pldAceptada(statusPLD);
+    let etapa = 1;
+    if (rolDone) etapa = 3;
+    else if (pldAcc) etapa = 2;
+    return {
+      origen: r.__origen || '—',
+      sistema: clean(r[c.sist]) || '—',
+      cod: clean(r[c.cod]),
+      colegio: clean(r[c.col]) || 'Sin nombre',
+      mentor: clean(r[c.ment]) || 'Sin asignar',
+      subetapa: clean(r[c.sub]),
+      etapa: etapa,
+      op: tipoOp(r[c.op]),
+      contrato: parseNum(r[c.contrato]),
+      bienvenida: r[c.bien], minuta: r[c.minuta], statusPLD: statusPLD, diagnostico: r[c.diag], rolAdmin: r[c.rol]
+    };
+  });
+}
+
+function buildOnbShell() {
+  const cont = document.getElementById('onb-content');
+  const uq = arr => [...new Set(arr.filter(Boolean))].sort((a, b) => String(a).localeCompare(String(b), 'es'));
+  const opts = vals => '<option value="__all__">Todos</option>' + uq(vals).map(v => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
+  cont.innerHTML = `
+    <section class="filters onb-filters">
+      <div class="filter"><label for="onbf-pais">País</label><select id="onbf-pais">${opts(KICK_ALL.map(k => k.pais))}</select></div>
+      <div class="filter"><label for="onbf-sist">Sistema</label><select id="onbf-sist">${opts(KICK_ALL.map(k => k.sistema))}</select></div>
+      <div class="filter"><label for="onbf-op">Tipo de operación</label><select id="onbf-op">${opts(KICK_ALL.map(k => k.op))}</select></div>
+      <div class="filter"><label for="onbf-ment">Mentor</label><select id="onbf-ment">${opts(KICK_ALL.map(k => k.mentor))}</select></div>
+      <div class="filter-stats">
+        <div class="stat"><div class="num" id="onbstat-renov">—</div><div class="lbl">Renovación</div><div class="stat-note" id="onbstat-sinclas"></div></div>
+        <div class="stat"><div class="num" id="onbstat-conq">—</div><div class="lbl">Conquista</div></div>
+        <div class="stat"><div class="num" id="onbstat-est">—</div><div class="lbl">Estudiantes confirmados</div></div>
+      </div>
+    </section>
+    <div id="onb-body"></div>`;
+  ['onbf-pais','onbf-sist','onbf-op','onbf-ment'].forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener('change', renderOnbBody); });
+}
+
+function onbFilters() {
+  const g = id => { const e = document.getElementById(id); return e ? e.value : '__all__'; };
+  return { pais: g('onbf-pais'), sist: g('onbf-sist'), op: g('onbf-op'), ment: g('onbf-ment') };
+}
+
+function renderOnbBody() {
+  const f = onbFilters();
+  const K = KICK_ALL.filter(k =>
+    (f.pais === '__all__' || k.pais === f.pais) &&
+    (f.sist === '__all__' || k.sistema === f.sist) &&
+    (f.op   === '__all__' || k.op === f.op) &&
+    (f.ment === '__all__' || k.mentor === f.ment));
+
+  const total = K.length;
+  const capIni  = K.filter(k => k.etapa >= 2).length;
+  const pendOnb = total - capIni;
+  const renov = K.filter(k => k.op === 'Renovación').length;
+  const conq  = K.filter(k => k.op === 'Conquista').length;
+  const sinOp = K.filter(k => k.op === 'Sin dato').length;
+  const estConf = K.reduce((s, k) => s + (k.contrato || 0), 0);
+
+  const rE1 = total;
+  const rE2 = K.filter(k => k.etapa >= 2).length;
+  const rE3 = K.filter(k => k.etapa >= 3).length;
+  const pct = n => total ? Math.round(n / total * 100) : 0;
+
+  const hito = (label, state) => `<span class="hito ${state}">${label}</span>`;
+  const stBien = v => { const s = normKey(v); if (s.includes('parcial') || s.includes('agendada')) return 'prog'; if (s.includes('no aplica') || s.includes('realizada')) return 'done'; return 'pend'; };
+  const stPLD  = v => { const s = normKey(v); if (s.includes('invitacion aceptada') && !s.includes('parcial')) return 'done'; if (s.includes('parcial') || s.includes('invitacion aceptada') || s.includes('enviado')) return 'prog'; return 'pend'; };
+
+  const kpiHtml = `
+    <div class="kpi-row">
+      <div class="kpi-card"><div class="k-num">${total}</div><div class="k-lbl">Total colegios confirmados</div><div class="k-sub">En planilla de kick-off</div></div>
+      <div class="kpi-card"><div class="k-num">${pendOnb}</div><div class="k-lbl">Pendientes de onboarding</div><div class="k-sub">Aún en Etapa 1</div></div>
+      <div class="kpi-card"><div class="k-num">${capIni}</div><div class="k-lbl">Capacitación iniciada</div><div class="k-sub">PLD con invitación aceptada</div></div>
+    </div>`;
+
+  const funnelHtml = `
+    <article class="card span-12" style="margin-bottom:18px">
+      <h2>Recorrido de kick-off</h2><div class="subtitle">Cuántos colegios llegaron a cada etapa · ${total} en total</div>
+      <div class="funnel-steps">
+        <div class="fstep s1"><div class="fs-n">${rE1}</div><div class="fs-t">Etapa 1 · Bienvenida y minuta</div><div class="fs-d">Iniciaron el proceso</div></div>
+        <div class="fstep s2"><div class="fs-n">${rE2}</div><div class="fs-t">Etapa 2 · Inscripción PLD y diagnóstico</div><div class="fs-d">${pct(rE2)}% · PLD con invitación aceptada</div></div>
+        <div class="fstep s3"><div class="fs-n">${rE3}</div><div class="fs-t">Etapa 3 · Rol admin e inicio mentoría</div><div class="fs-d">${pct(rE3)}%</div></div>
+      </div>
+    </article>`;
+
+  const onbRows = K.map(k => `
+      <tr>
+        <td>${escapeHtml(k.cod)}</td>
+        <td>${escapeHtml(k.colegio)}</td>
+        <td><span class="pais-cell"><span class="pais-flag" aria-hidden="true">${TM_FLAGS[k.pais] || '🏳️'}</span>${escapeHtml(k.pais || '—')}</span></td>
+        <td>${escapeHtml(k.sistema)}</td>
+        <td><span class="tpill ${k.op === 'Renovación' ? 'reno' : k.op === 'Conquista' ? 'conq' : 'sd'}">${escapeHtml(k.op)}</span></td>
+        <td class="num">${fmt(k.contrato)}</td>
+        <td>${escapeHtml(k.subetapa || '—')}</td>
+        <td><span class="hitos">${hito('Bienvenida', stBien(k.bienvenida))}<span class="hsep"></span>${hito('Inscripción PLD', stPLD(k.statusPLD))}${hito('Diagnóstico', kbool(k.diagnostico) ? 'done' : 'pend')}<span class="hsep"></span>${hito('Rol admin', kbool(k.rolAdmin) ? 'done' : 'pend')}</span></td>
+        <td class="num">${k.docentesPLD == null ? '<span class="sin-plat">—</span>' : fmt(k.docentesPLD)}</td>
+        <td class="num">${k.vitalidad == null ? '<span class="sin-plat">—</span>' : k.vitalidad.toFixed(1) + '%'}</td>
+      </tr>`).join('') || '<tr><td colspan="10" style="text-align:center;color:var(--ink-mute);padding:20px">Sin colegios para este filtro.</td></tr>';
+
+  const onbHtml = `
+    <div class="block2">
+      <div class="section-title2">🚀 Colegios en kick-off</div>
+      <div class="b2-explainer">Todos los colegios en proceso de kick-off. Los que ya están dados de alta en Playground muestran además sus docentes en PLD y su vitalidad digital.</div>
+      <div style="overflow-x:auto"><table class="onb-table"><thead><tr><th>COD</th><th>Colegio</th><th>País</th><th>Sistema</th><th>Operación</th><th class="num">Licencias</th><th>Subetapa</th><th>Hitos · E1 · E2 · E3</th><th class="num">Docentes PLD</th><th class="num">Vitalidad</th></tr></thead><tbody>${onbRows}</tbody></table></div>
+      <div class="onb-legend">
+        <span><span class="hito done">✓</span> Completado</span>
+        <span><span class="hito prog">◐</span> En proceso</span>
+        <span><span class="hito pend">○</span> Pendiente</span>
+        <span style="margin-left:auto">Docentes PLD y vitalidad: solo colegios ya en Playground · la vitalidad refleja la actividad de los docentes capacitándose</span>
+      </div>
+    </div>`;
+
+  document.getElementById('onb-body').innerHTML = kpiHtml + funnelHtml + onbHtml;
+
+  const setTxt = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+  setTxt('onbstat-renov', renov);
+  setTxt('onbstat-conq', conq);
+  setTxt('onbstat-est', fmt(estConf));
+  const scEl = document.getElementById('onbstat-sinclas');
+  if (scEl) scEl.textContent = sinOp ? `${sinOp} sin clasificar` : '';
+
+  const pill2 = document.getElementById('tabpill-onb');
+  if (pill2) pill2.textContent = KICK_ALL.length;
+}
 </script>
 </body>
 </html>
