@@ -1855,7 +1855,7 @@ async function loadOnboarding() {
     const texts = await Promise.all(CSV_URL_KICKOFF.map(async u => { const res = await fetch(u); if (!res.ok) throw new Error('HTTP ' + res.status); return res.text(); }));
     const raw = [];
     texts.forEach((t, i) => { parseKickoff(t).forEach(r => { r.__origen = ORIG[i]; raw.push(r); }); });
-    KICK_ALL = mapKick(raw).filter(k => k.op !== 'Baja');
+    KICK_ALL = mapKick(raw).filter(k => k.op !== 'Baja' && k.confirmado);
     const codKey = c => String(c || '').toUpperCase().replace(/\s+/g, '');
     const statusByCod = {};
     (RAW ? (RAW.rows || []).concat(RAW.rowsNoActivos || []) : []).forEach(s => { if (s.cod) statusByCod[codKey(s.cod)] = s; });
@@ -1910,20 +1910,30 @@ function mapKick(rows) {
   };
   return rows.map(r => {
     const statusPLD = r[c.pld];
-    const rolDone = kbool(r[c.rol]);
-    const pldAcc = pldAceptada(statusPLD);
-    let etapa = 1;
-    if (rolDone) etapa = 3;
-    else if (pldAcc) etapa = 2;
+    const subeRaw = clean(r[c.sub]);
+    const nb = normKey(r[c.bien]);
+    const bienOk = (nb.includes('realizada') && !nb.includes('parcial')) || nb.includes('no aplica'); // Etapa 1
+    const pldOk = pldAceptada(statusPLD);                                                             // Etapa 2 (aceptada / parcial)
+    const nr = normKey(r[c.rol]);
+    const rolOk = nr.includes('realizada') && !nr.includes('parcial');                                // Etapa 3
+    // Etapa alcanzada = la más alta, en cascada. 0 = confirmado pero aún sin bienvenida.
+    let etapa = 0;
+    if (rolOk) etapa = 3;
+    else if (pldOk) etapa = 2;
+    else if (bienOk) etapa = 1;
+    // Baja: por tipo de operación o por subetapa "0.0_Colegio dado de baja"
+    let op = tipoOp(r[c.op]);
+    if (normKey(subeRaw).includes('dado de baja')) op = 'Baja';
     return {
       origen: r.__origen || '—',
       sistema: clean(r[c.sist]) || '—',
       cod: clean(r[c.cod]),
       colegio: clean(r[c.col]) || 'Sin nombre',
       mentor: clean(r[c.ment]) || 'Sin asignar',
-      subetapa: clean(r[c.sub]),
+      subetapa: subeRaw,
+      confirmado: subeRaw !== '',   // confirmado = Subetapa de implementación cargada
       etapa: etapa,
-      op: tipoOp(r[c.op]),
+      op: op,
       contrato: parseNum(r[c.contrato]),
       bienvenida: r[c.bien], minuta: r[c.minuta], statusPLD: statusPLD, diagnostico: r[c.diag], rolAdmin: r[c.rol]
     };
@@ -1941,13 +1951,14 @@ function buildOnbShell() {
       <div class="filter"><label for="onbf-op">Tipo de operación</label><select id="onbf-op">${opts(KICK_ALL.map(k => k.op))}</select></div>
       <div class="filter"><label for="onbf-ment">Mentor</label><select id="onbf-ment">${opts(KICK_ALL.map(k => k.mentor))}</select></div>
       <div class="filter-stats">
-        <div class="stat"><div class="num" id="onbstat-renov">—</div><div class="lbl">Renovación</div><div class="stat-note" id="onbstat-sinclas"></div></div>
-        <div class="stat"><div class="num" id="onbstat-conq">—</div><div class="lbl">Conquista</div></div>
+        <div class="stat"><div class="num" id="onbstat-total">—</div><div class="lbl">Colegios confirmados</div><div class="stat-note" id="onbstat-desglose"></div></div>
         <div class="stat"><div class="num" id="onbstat-est">—</div><div class="lbl">Estudiantes confirmados</div></div>
       </div>
     </section>
     <div id="onb-body"></div>`;
-  ['onbf-pais','onbf-sist','onbf-op','onbf-ment'].forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener('change', renderOnbBody); });
+  ['onbf-pais','onbf-sist','onbf-op','onbf-ment'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.addEventListener('change', renderOnbBody);
+  });
 }
 
 function onbFilters() {
@@ -1963,37 +1974,36 @@ function renderOnbBody() {
     (f.op   === '__all__' || k.op === f.op) &&
     (f.ment === '__all__' || k.mentor === f.ment));
 
-  const total = K.length;
-  const capIni  = K.filter(k => k.etapa >= 2).length;
-  const pendOnb = total - capIni;
+  const total = K.length;                          // confirmados (subetapa cargada, sin baja)
+  const rE1 = K.filter(k => k.etapa >= 1).length;  // bienvenida realizada / no aplica (o más)
+  const rE2 = K.filter(k => k.etapa >= 2).length;  // PLD aceptada / parcial (o más)
+  const rE3 = K.filter(k => k.etapa >= 3).length;  // rol admin realizada
+  const pendOnb = total - rE1;                      // confirmados con bienvenida aún pendiente
   const renov = K.filter(k => k.op === 'Renovación').length;
   const conq  = K.filter(k => k.op === 'Conquista').length;
   const sinOp = K.filter(k => k.op === 'Sin dato').length;
   const estConf = K.reduce((s, k) => s + (k.contrato || 0), 0);
-
-  const rE1 = total;
-  const rE2 = K.filter(k => k.etapa >= 2).length;
-  const rE3 = K.filter(k => k.etapa >= 3).length;
   const pct = n => total ? Math.round(n / total * 100) : 0;
 
   const hito = (label, state) => `<span class="hito ${state}">${label}</span>`;
-  const stBien = v => { const s = normKey(v); if (s.includes('parcial') || s.includes('agendada')) return 'prog'; if (s.includes('no aplica') || s.includes('realizada')) return 'done'; return 'pend'; };
+  const stBien = v => { const s = normKey(v); if (s.includes('no aplica')) return 'done'; if (s.includes('realizada') && !s.includes('parcial')) return 'done'; if (s.includes('parcial') || s.includes('agendada')) return 'prog'; return 'pend'; };
   const stPLD  = v => { const s = normKey(v); if (s.includes('invitacion aceptada') && !s.includes('parcial')) return 'done'; if (s.includes('parcial') || s.includes('invitacion aceptada') || s.includes('enviado')) return 'prog'; return 'pend'; };
+  const stRol  = v => { const s = normKey(v); if (s.includes('realizada') && !s.includes('parcial')) return 'done'; if (s.includes('parcial') || s.includes('proceso')) return 'prog'; return 'pend'; };
 
   const kpiHtml = `
     <div class="kpi-row">
-      <div class="kpi-card"><div class="k-num">${total}</div><div class="k-lbl">Total colegios confirmados</div><div class="k-sub">En planilla de kick-off</div></div>
-      <div class="kpi-card"><div class="k-num">${pendOnb}</div><div class="k-lbl">Pendientes de onboarding</div><div class="k-sub">Aún en Etapa 1</div></div>
-      <div class="kpi-card"><div class="k-num">${capIni}</div><div class="k-lbl">Capacitación iniciada</div><div class="k-sub">PLD con invitación aceptada</div></div>
+      <div class="kpi-card"><div class="k-num">${total}</div><div class="k-lbl">Total colegios confirmados</div><div class="k-sub">Con subetapa de implementación cargada</div></div>
+      <div class="kpi-card"><div class="k-num">${pendOnb}</div><div class="k-lbl">Pendientes de onboarding</div><div class="k-sub">Bienvenida aún pendiente</div></div>
+      <div class="kpi-card"><div class="k-num">${rE2}</div><div class="k-lbl">Capacitación iniciada</div><div class="k-sub">PLD con invitación aceptada</div></div>
     </div>`;
 
   const funnelHtml = `
     <article class="card span-12" style="margin-bottom:18px">
-      <h2>Recorrido de kick-off</h2><div class="subtitle">Cuántos colegios llegaron a cada etapa · ${total} en total</div>
+      <h2>Recorrido de kick-off</h2><div class="subtitle">Cuántos colegios llegaron a cada etapa · ${total} confirmados en total</div>
       <div class="funnel-steps">
-        <div class="fstep s1"><div class="fs-n">${rE1}</div><div class="fs-t">Etapa 1 · Bienvenida y minuta</div><div class="fs-d">Iniciaron el proceso</div></div>
+        <div class="fstep s1"><div class="fs-n">${rE1}</div><div class="fs-t">Etapa 1 · Onboarding y bienvenida</div><div class="fs-d">${pct(rE1)}% · Bienvenida realizada o no aplica</div></div>
         <div class="fstep s2"><div class="fs-n">${rE2}</div><div class="fs-t">Etapa 2 · Inscripción PLD y diagnóstico</div><div class="fs-d">${pct(rE2)}% · PLD con invitación aceptada</div></div>
-        <div class="fstep s3"><div class="fs-n">${rE3}</div><div class="fs-t">Etapa 3 · Rol admin e inicio mentoría</div><div class="fs-d">${pct(rE3)}%</div></div>
+        <div class="fstep s3"><div class="fs-n">${rE3}</div><div class="fs-t">Etapa 3 · Rol admin e inicio mentoría</div><div class="fs-d">${pct(rE3)}% · Rol admin realizada</div></div>
       </div>
     </article>`;
 
@@ -2006,7 +2016,7 @@ function renderOnbBody() {
         <td><span class="tpill ${k.op === 'Renovación' ? 'reno' : k.op === 'Conquista' ? 'conq' : 'sd'}">${escapeHtml(k.op)}</span></td>
         <td class="num">${fmt(k.contrato)}</td>
         <td>${escapeHtml(k.subetapa || '—')}</td>
-        <td><span class="hitos">${hito('Bienvenida', stBien(k.bienvenida))}<span class="hsep"></span>${hito('Inscripción PLD', stPLD(k.statusPLD))}${hito('Diagnóstico', kbool(k.diagnostico) ? 'done' : 'pend')}<span class="hsep"></span>${hito('Rol admin', kbool(k.rolAdmin) ? 'done' : 'pend')}</span></td>
+        <td><span class="hitos">${hito('Bienvenida', stBien(k.bienvenida))}<span class="hsep"></span>${hito('Inscripción PLD', stPLD(k.statusPLD))}${hito('Diagnóstico', kbool(k.diagnostico) ? 'done' : 'pend')}<span class="hsep"></span>${hito('Rol admin', stRol(k.rolAdmin))}</span></td>
         <td class="num">${k.docentesPLD == null ? '<span class="sin-plat">—</span>' : fmt(k.docentesPLD)}</td>
         <td class="num">${k.vitalidad == null ? '<span class="sin-plat">—</span>' : k.vitalidad.toFixed(1) + '%'}</td>
       </tr>`).join('') || '<tr><td colspan="10" style="text-align:center;color:var(--ink-mute);padding:20px">Sin colegios para este filtro.</td></tr>';
@@ -2014,24 +2024,23 @@ function renderOnbBody() {
   const onbHtml = `
     <div class="block2">
       <div class="section-title2">🚀 Colegios en kick-off</div>
-      <div class="b2-explainer">Todos los colegios en proceso de kick-off. Los que ya están dados de alta en Playground muestran además sus docentes en PLD y su vitalidad digital.</div>
+      <div class="b2-explainer">Colegios confirmados (con subetapa de implementación cargada) en proceso de kick-off. Los que ya están en Playground muestran además sus docentes en PLD y su vitalidad digital.</div>
       <div style="overflow-x:auto"><table class="onb-table"><thead><tr><th>COD</th><th>Colegio</th><th>País</th><th>Sistema</th><th>Operación</th><th class="num">Licencias</th><th>Subetapa</th><th>Hitos · E1 · E2 · E3</th><th class="num">Docentes PLD</th><th class="num">Vitalidad</th></tr></thead><tbody>${onbRows}</tbody></table></div>
       <div class="onb-legend">
         <span><span class="hito done">✓</span> Completado</span>
         <span><span class="hito prog">◐</span> En proceso</span>
         <span><span class="hito pend">○</span> Pendiente</span>
-        <span style="margin-left:auto">Docentes PLD y vitalidad: solo colegios ya en Playground · la vitalidad refleja la actividad de los docentes capacitándose</span>
+        <span style="margin-left:auto">Docentes PLD y vitalidad: solo colegios ya en Playground</span>
       </div>
     </div>`;
 
   document.getElementById('onb-body').innerHTML = kpiHtml + funnelHtml + onbHtml;
 
   const setTxt = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
-  setTxt('onbstat-renov', renov);
-  setTxt('onbstat-conq', conq);
+  setTxt('onbstat-total', total);
   setTxt('onbstat-est', fmt(estConf));
-  const scEl = document.getElementById('onbstat-sinclas');
-  if (scEl) scEl.textContent = sinOp ? `${sinOp} sin clasificar` : '';
+  const desg = document.getElementById('onbstat-desglose');
+  if (desg) desg.textContent = `${renov} renovación · ${conq} conquista` + (sinOp ? ` · ${sinOp} sin clasificar` : '');
 
   const pill2 = document.getElementById('tabpill-onb');
   if (pill2) pill2.textContent = KICK_ALL.length;
