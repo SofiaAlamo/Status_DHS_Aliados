@@ -505,7 +505,7 @@
   .av-davg b { color:var(--ink); }
   .av-brow { display:flex; align-items:center; gap:8px; }
   .av-t2 { flex:1; height:8px; background:#edf0f4; border-radius:50px; overflow:hidden; }
-  .av-f2 { height:100%; border-radius:50px; }
+  .av-f2 { display:block; height:100%; border-radius:50px; }
   .av-p2 { font-size:12px; font-weight:700; min-width:38px; text-align:right; }
   .av-track { display:grid; grid-template-columns:1fr 190px 150px; gap:14px; align-items:center; padding:7px 0; border-top:1px solid #f0f2f6; }
   .av-track:first-of-type { border-top:none; }
@@ -518,7 +518,7 @@
   .av-chip.alert { background:#fbe9e9; color:#b23b3b; }
   .av-bar { display:inline-flex; align-items:center; gap:9px; min-width:140px; }
   .avb-track { flex:1; height:9px; background:#e9edf2; border-radius:50px; overflow:hidden; }
-  .avb-fill { height:100%; border-radius:50px; }
+  .avb-fill { display:block; height:100%; border-radius:50px; }
   .avb-fill.lo{background:#cdd3db;} .avb-fill.mid{background:#e0a92b;} .avb-fill.hi{background:#2ea25a;}
   .avb-pct { font-size:13px; font-weight:700; min-width:38px; text-align:right; }
   .avb-pct.lo{color:#7a8698;} .avb-pct.mid{color:#8a6d12;} .avb-pct.hi{color:#1e7a45;}
@@ -552,6 +552,8 @@
   .mn-sc { font-size:12px; color:var(--ink-mute); text-align:right; }
   .note-box2 { font-size:12.5px; color:#3a4763; background:#eef2f7; border-left:3px solid #5a6b8c; border-radius:0 4px 4px 0; padding:11px 15px; margin:16px 0 0; line-height:1.5; }
   @media(max-width:720px){ .mn-sch{grid-template-columns:1fr;gap:6px;} .mn-sc{text-align:left;} .av-track{grid-template-columns:1fr;gap:4px;} .av-tc{text-align:left;} }
+  .onb-table th.gc, .onb-table td.gc { text-align:center; }
+  .birrete { font-size:15px; }
 </style>
 </head>
 <body>
@@ -2090,19 +2092,19 @@ function renderOnbBody() {
         <td>${escapeHtml(k.subetapa || '—')}</td>
         <td><span class="hitos">${hito('Bienvenida', stBien(k.bienvenida))}<span class="hsep"></span>${hito('Inscripción PLD', stPLD(k.statusPLD))}${hito('Diagnóstico', kbool(k.diagnostico) ? 'done' : 'pend')}<span class="hsep"></span>${hito('Rol admin', stRol(k.rolAdmin))}</span></td>
         <td class="num">${k.docentesPLD == null ? '<span class="sin-plat">—</span>' : fmt(k.docentesPLD)}</td>
-        <td class="num">${k.vitalidad == null ? '<span class="sin-plat">—</span>' : k.vitalidad.toFixed(1) + '%'}</td>
+        <td class="gc">${AVANCE_BY_COD[codKeyAv(k.cod)] && AVANCE_BY_COD[codKeyAv(k.cod)].graduado ? '<span class="birrete" title="Al menos 1 docente completó una capacitación PLD al 100%">🎓</span>' : '<span class="sin-plat">—</span>'}</td>
       </tr>`).join('') || '<tr><td colspan="10" style="text-align:center;color:var(--ink-mute);padding:20px">Sin colegios para este filtro.</td></tr>';
 
   const onbHtml = `
     <div class="block2">
       <div class="section-title2">🚀 Colegios en kick-off</div>
-      <div class="b2-explainer">Colegios confirmados (con subetapa de implementación cargada) en proceso de kick-off. Los que ya están en Playground muestran además sus docentes en PLD y su vitalidad digital.</div>
-      <div style="overflow-x:auto"><table class="onb-table"><thead><tr><th>COD</th><th>Colegio</th><th>País</th><th>Sistema</th><th>Operación</th><th class="num">Licencias</th><th>Subetapa</th><th>Hitos · E1 · E2 · E3</th><th class="num">Docentes PLD</th><th class="num">Vitalidad</th></tr></thead><tbody>${onbRows}</tbody></table></div>
+      <div class="b2-explainer">Colegios confirmados (con subetapa de implementación cargada) en proceso de kick-off. Los que ya están en Playground muestran sus docentes en PLD. El birrete 🎓 marca colegios donde al menos un docente completó una capacitación al 100%.</div>
+      <div style="overflow-x:auto"><table class="onb-table"><thead><tr><th>COD</th><th>Colegio</th><th>País</th><th>Sistema</th><th>Operación</th><th class="num">Licencias</th><th>Subetapa</th><th>Hitos · E1 · E2 · E3</th><th class="num">Docentes PLD</th><th class="gc">🎓 Graduado</th></tr></thead><tbody>${onbRows}</tbody></table></div>
       <div class="onb-legend">
         <span><span class="hito done">✓</span> Completado</span>
         <span><span class="hito prog">◐</span> En proceso</span>
         <span><span class="hito pend">○</span> Pendiente</span>
-        <span style="margin-left:auto">Docentes PLD y vitalidad: solo colegios ya en Playground</span>
+        <span style="margin-left:auto">Docentes PLD: solo colegios ya en Playground · 🎓 = al menos un docente completó una capacitación</span>
       </div>
     </div>`;
 
@@ -2173,6 +2175,7 @@ function parseAvance(text) {
     c.prom = allPct.length ? Math.round(allPct.reduce((s,x)=>s+x,0)/allPct.length) : 0;
     c.activos = c.docentes.filter(d => !d.dormido).length;
     c.dormidos = c.docentes.filter(d => d.dormido).length;
+    c.graduado = c.docentes.some(d => d.tracks.some(t => t.pct >= 100));
   });
   return by;
 }
@@ -2183,6 +2186,7 @@ async function loadAvance() {
     if (!r.ok) throw new Error('HTTP ' + r.status);
     AVANCE_BY_COD = parseAvance(await r.text());
     AVANCE_LOADED = true;
+    if (typeof renderOnbBody === 'function' && document.getElementById('onb-body') && typeof KICK_ALL !== 'undefined' && KICK_ALL.length) renderOnbBody();
     wireAvanceRows();
     if (typeof renderMentores === 'function' && document.getElementById('tab-mentores')) renderMentores();
   } catch (e) { console.error('Avance PLD:', e); }
