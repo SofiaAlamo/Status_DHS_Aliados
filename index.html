@@ -481,6 +481,77 @@
   .hsep { display: inline-block; width: 1px; height: 16px; background: #d4d9e0; margin: 0 2px; }
   .onb-note { font-size: 11.5px; color: var(--ink-mute); margin-top: 12px; }
   .onb-legend { font-size: 11.5px; color: var(--ink-mute); margin-top: 12px; display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
+
+  /* ═══ AVANCE DOCENTE PLD (desplegable) ═══ */
+  tr.avrow.has-av { cursor: pointer; }
+  tr.avrow.has-av:hover { background: #f6f8fb; }
+  tr.avrow.has-av.open { background: #f1f5fb; }
+  .av-chev { display:inline-block; width:13px; color:#8a97ab; font-size:11px; margin-right:6px; transition:transform .18s; }
+  tr.avrow.open .av-chev { transform:rotate(90deg); color:#33507d; }
+  tr.av-detail > td { padding:0; background:#fbfcfd; }
+  .av-inner { padding:6px 20px 20px 40px; }
+  .av-empty { padding:16px 0; color:var(--ink-mute); font-size:13px; }
+  .av-note { font-size:12px; color:#8a6d12; background:#fdf3d6; border-radius:6px; padding:8px 12px; margin:0 0 12px; }
+  .av-head { display:flex; align-items:center; gap:16px; flex-wrap:wrap; padding:14px 0; border-bottom:1px dashed #dbe1ea; margin-bottom:14px; }
+  .av-stat { display:flex; flex-direction:column; }
+  .av-stat .n { font-family:var(--cond); font-size:24px; font-weight:700; line-height:1; color:#33507d; }
+  .av-stat .t { font-size:10px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-mute); font-weight:700; margin-top:4px; }
+  .av-sep { width:1px; align-self:stretch; background:#e1e6ee; }
+  .av-tag { margin-left:auto; font-size:10px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:#8a6d12; background:#fdf3d6; border-radius:50px; padding:4px 12px; }
+  .av-doc { border:1px solid #e6eaf0; border-radius:8px; background:#fff; padding:11px 15px; margin-bottom:9px; }
+  .av-dtop { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+  .av-dn { font-weight:700; font-size:13.5px; }
+  .av-davg { margin-left:auto; font-size:12px; color:var(--ink-mute); }
+  .av-davg b { color:var(--ink); }
+  .av-brow { display:flex; align-items:center; gap:8px; }
+  .av-t2 { flex:1; height:8px; background:#edf0f4; border-radius:50px; overflow:hidden; }
+  .av-f2 { height:100%; border-radius:50px; }
+  .av-p2 { font-size:12px; font-weight:700; min-width:38px; text-align:right; }
+  .av-track { display:grid; grid-template-columns:1fr 190px 150px; gap:14px; align-items:center; padding:7px 0; border-top:1px solid #f0f2f6; }
+  .av-track:first-of-type { border-top:none; }
+  .av-tn { font-size:12.5px; font-weight:600; }
+  .av-tn small { display:block; font-weight:400; color:var(--ink-mute); font-size:11px; }
+  .av-tc { font-size:11.5px; color:var(--ink-mute); text-align:right; }
+  .av-chip { display:inline-block; padding:2px 9px; border-radius:50px; font-size:11px; font-weight:700; }
+  .av-chip.act { background:#e7f5ec; color:#1e7a45; }
+  .av-chip.dorm, .av-chip.neu { background:#eef0f2; color:#7a8698; }
+  .av-chip.alert { background:#fbe9e9; color:#b23b3b; }
+  .av-bar { display:inline-flex; align-items:center; gap:9px; min-width:140px; }
+  .avb-track { flex:1; height:9px; background:#e9edf2; border-radius:50px; overflow:hidden; }
+  .avb-fill { height:100%; border-radius:50px; }
+  .avb-fill.lo{background:#cdd3db;} .avb-fill.mid{background:#e0a92b;} .avb-fill.hi{background:#2ea25a;}
+  .avb-pct { font-size:13px; font-weight:700; min-width:38px; text-align:right; }
+  .avb-pct.lo{color:#7a8698;} .avb-pct.mid{color:#8a6d12;} .avb-pct.hi{color:#1e7a45;}
+  /* ═══ SEGUIMIENTO POR MENTOR (interno) ═══ */
+  .mn-strip { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin:6px 0 18px; }
+  .mn-k { background:var(--bg-card); border:1px solid var(--line); border-radius:var(--radius); padding:13px 15px; }
+  .mn-k .n { font-family:var(--cond); font-size:28px; font-weight:700; line-height:1; }
+  .mn-k .t { font-size:10px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-mute); font-weight:700; margin-top:5px; }
+  .mn-k .s { font-size:11px; color:var(--ink-mute); margin-top:2px; }
+  .mn-k.warn .n { color:#b23b3b; }
+  .mn-toolbar { display:flex; align-items:center; gap:12px; margin-bottom:12px; flex-wrap:wrap; }
+  .mn-lbl { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--ink-mute); }
+  .seg { display:inline-flex; border:1px solid var(--line); border-radius:50px; overflow:hidden; background:#fff; }
+  .seg button { border:none; background:#fff; padding:7px 14px; font-family:var(--sans); font-size:12.5px; font-weight:600; color:var(--ink-mute); cursor:pointer; }
+  .seg button.active { background:var(--dh-black,#111); color:#fff; }
+  .tcard2 { background:var(--bg-card); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; }
+  .mn-table { width:100%; border-collapse:collapse; font-variant-numeric:tabular-nums; }
+  .mn-table th { font-size:10px; text-transform:uppercase; letter-spacing:.09em; color:#5a6b8c; font-weight:700; background:#eef2f7; padding:11px 13px; text-align:left; white-space:nowrap; }
+  .mn-table th.num { text-align:right; }
+  .mn-table td { padding:13px; border-top:1px solid var(--line); font-size:13.5px; }
+  .mn-table td.num { text-align:right; }
+  .mn-row { cursor:pointer; } .mn-row:hover { background:#f6f8fb; } .mn-row.open { background:#f1f5fb; }
+  .mn-chev { display:inline-block; color:#8a97ab; transition:transform .18s; }
+  .mn-row.open .mn-chev { transform:rotate(90deg); color:#33507d; }
+  .mn-name { font-weight:700; }
+  .mn-detail > td { padding:0; background:#fbfcfd; }
+  .mn-inner { padding:6px 20px 18px 40px; }
+  .mn-inner h4 { font-family:var(--cond); font-size:13px; letter-spacing:.05em; text-transform:uppercase; color:#5a6b8c; margin:12px 0 10px; }
+  .mn-sch { display:grid; grid-template-columns:1fr 170px 110px 120px; gap:12px; align-items:center; padding:9px 13px; border:1px solid #e6eaf0; border-radius:8px; background:#fff; margin-bottom:7px; }
+  .mn-sn { font-weight:600; font-size:13px; } .mn-sn small { display:block; font-weight:400; color:var(--ink-mute); font-size:11px; }
+  .mn-sc { font-size:12px; color:var(--ink-mute); text-align:right; }
+  .note-box2 { font-size:12.5px; color:#3a4763; background:#eef2f7; border-left:3px solid #5a6b8c; border-radius:0 4px 4px 0; padding:11px 15px; margin:16px 0 0; line-height:1.5; }
+  @media(max-width:720px){ .mn-sch{grid-template-columns:1fr;gap:6px;} .mn-sc{text-align:left;} .av-track{grid-template-columns:1fr;gap:4px;} .av-tc{text-align:left;} }
 </style>
 </head>
 <body>
@@ -1026,6 +1097,7 @@ function boot() {
   if (pill1) pill1.textContent = RAW.rows.length;
   setupTabs();
   loadOnboarding().catch(e => console.error('Onboarding:', e));
+  loadAvance();
 }
 
 function opt(v) { const o = document.createElement('option'); o.value = v; o.textContent = v; return o; }
@@ -1775,7 +1847,7 @@ function renderColegios(rowsArg) {
            ${r.vitalidad.toFixed(1)}%
          </span>`;
     return `
-      <tr>
+      <tr class="avrow" data-cod="${escapeHtml(r.cod)}" data-dpld="${r.docentesPLD == null ? '' : r.docentesPLD}">
         <td>${escapeHtml(r.colegio)}${normKey(r.etapa) === 'piloto en curso' ? ' <span class="chip-piloto">Piloto</span>' : ''}</td>
         <td>${escapeHtml(r.pais)}</td>
         <td>${escapeHtml(r.opMode)}</td>
@@ -1789,6 +1861,7 @@ function renderColegios(rowsArg) {
       </tr>
     `;
   }).join('');
+  wireAvanceRows();
 }
 
 function destroy(id) { if (CHARTS[id]) { CHARTS[id].destroy(); delete CHARTS[id]; } }
@@ -1828,10 +1901,9 @@ function setupTabs() {
 }
 function switchTab(name) {
   document.querySelectorAll('.tabbar .tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
-  const dash = document.getElementById('dashboard');
-  const onb  = document.getElementById('tab-onb');
-  if (dash) dash.classList.toggle('hidden', name !== 'impl');
-  if (onb)  onb.classList.toggle('hidden',  name !== 'onb');
+  const SEC = { impl: 'dashboard', onb: 'tab-onb', mentores: 'tab-mentores' };
+  Object.entries(SEC).forEach(([n, id]) => { const el = document.getElementById(id); if (el) el.classList.toggle('hidden', n !== name); });
+  if (name === 'mentores' && typeof renderMentores === 'function') renderMentores();
 }
 
 function kickEnVista(k) {
@@ -2008,7 +2080,7 @@ function renderOnbBody() {
     </article>`;
 
   const onbRows = K.map(k => `
-      <tr>
+      <tr class="avrow" data-cod="${escapeHtml(k.cod)}" data-dpld="${k.docentesPLD == null ? '' : k.docentesPLD}">
         <td>${escapeHtml(k.cod)}</td>
         <td>${escapeHtml(k.colegio)}</td>
         <td><span class="pais-cell"><span class="pais-flag" aria-hidden="true">${TM_FLAGS[k.pais] || '🏳️'}</span>${escapeHtml(k.pais || '—')}</span></td>
@@ -2044,7 +2116,143 @@ function renderOnbBody() {
 
   const pill2 = document.getElementById('tabpill-onb');
   if (pill2) pill2.textContent = KICK_ALL.length;
+  wireAvanceRows();
 }
+
+/* ═══════════ AVANCE DOCENTE EN PLD · CSV de avance, cruce por COD ═══════════ */
+const CSV_URL_AVANCE = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSPFRKVvwUioC_7rKCblIMz7Cu7qvQpQI8LJM982dThQkT_hLqaJgwU2Js8OhEZag4aJ3_5GCfvzSwd/pub?gid=633679674&single=true&output=csv';
+let AVANCE_BY_COD = {};
+let AVANCE_LOADED = false;
+const codKeyAv = c => String(c || '').toUpperCase().replace(/\s+/g, '');
+const avLvl = p => p >= 67 ? 'hi' : p >= 34 ? 'mid' : 'lo';
+
+function avDias(str) {
+  if (!str) return null;
+  const d = new Date(String(str).trim().replace(' ', 'T'));
+  if (isNaN(d.getTime())) return null;
+  return Math.floor((Date.now() - d.getTime()) / 86400000);
+}
+
+function parseAvance(text) {
+  const res = Papa.parse(text, { header: true, skipEmptyLines: true });
+  const pick = (o, ...ks) => { for (const k of ks) { if (k in o && o[k] != null && String(o[k]).trim() !== '') return o[k]; } return ''; };
+  const by = {};
+  (res.data || []).forEach(o => {
+    const cod = codKeyAv(pick(o, 'Cod', 'COD', 'cod'));
+    if (!cod || ['N/A','#N/A','NA','#NA'].includes(cod)) return;
+    const trackPld = normKey(pick(o, 'track_pld'));
+    if (trackPld === 'false' || trackPld === '0' || trackPld === 'no') return;
+    const cert = String(pick(o, 'certificacion', 'certificación')).trim();
+    if (!cert || normKey(cert).includes('clon')) return;
+    const email = String(pick(o, 'email')).trim().toLowerCase();
+    const nombre = String(pick(o, 'usuario')).trim() || 'Sin nombre';
+    const pct = Math.max(0, Math.min(100, parseFloat(String(pick(o, 'progreso_ruta_pct') || '0').replace(',', '.')) || 0));
+    const cf = parseInt(pick(o, 'cursos_finalizados') || '0', 10) || 0;
+    const ct = parseInt(pick(o, 'cursos_totales') || '0', 10) || 0;
+    const clf = parseInt(pick(o, 'clases_finalizadas') || '0', 10) || 0;
+    const clt = parseInt(pick(o, 'clases_totales') || '0', 10) || 0;
+    const dias = avDias(pick(o, 'ultimo_login'));
+    const c = (by[cod] = by[cod] || { docentes: [], _by: {} });
+    const key = email || nombre;
+    let doc = c._by[key];
+    if (!doc) { doc = { nombre, email, tracks: [] }; c._by[key] = doc; c.docentes.push(doc); }
+    doc.tracks.push({ cert, pct, cf, ct, clf, clt, dias });
+  });
+  Object.values(by).forEach(c => {
+    delete c._by;
+    c.docentes.forEach(d => {
+      d.prom = d.tracks.length ? Math.round(d.tracks.reduce((s,t)=>s+t.pct,0)/d.tracks.length) : 0;
+      const ds = d.tracks.map(t=>t.dias).filter(x=>x!=null);
+      d.dias = ds.length ? Math.min(...ds) : null;
+      d.dormido = d.dias == null ? true : d.dias > 14;
+    });
+    const allPct = [];
+    c.docentes.forEach(d => d.tracks.forEach(t => allPct.push(t.pct)));
+    c.nDoc = c.docentes.length;
+    c.nInscr = allPct.length;
+    c.prom = allPct.length ? Math.round(allPct.reduce((s,x)=>s+x,0)/allPct.length) : 0;
+    c.activos = c.docentes.filter(d => !d.dormido).length;
+    c.dormidos = c.docentes.filter(d => d.dormido).length;
+  });
+  return by;
+}
+
+async function loadAvance() {
+  try {
+    const r = await fetch(CSV_URL_AVANCE);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    AVANCE_BY_COD = parseAvance(await r.text());
+    AVANCE_LOADED = true;
+    wireAvanceRows();
+    if (typeof renderMentores === 'function' && document.getElementById('tab-mentores')) renderMentores();
+  } catch (e) { console.error('Avance PLD:', e); }
+}
+
+function renderAvancePanel(cod, dpldCol) {
+  const c = AVANCE_BY_COD[codKeyAv(cod)];
+  if (!c || !c.nDoc) return '<div class="av-empty">Sin docentes en el CSV de avance para este colegio.</div>';
+  const head = `
+    <div class="av-head">
+      <div class="av-stat"><div class="n">${c.nDoc}</div><div class="t">Docentes inscriptos</div></div>
+      <div class="av-sep"></div>
+      <div class="av-stat"><div class="n">${c.prom}%</div><div class="t">Avance promedio</div></div>
+      <div class="av-sep"></div>
+      <div class="av-stat"><div class="n">${c.activos}</div><div class="t">Activos (≤14 días)</div></div>
+      <div class="av-sep"></div>
+      <div class="av-stat"><div class="n">${c.dormidos}</div><div class="t">Dormidos (+14 días)</div></div>
+      <span class="av-tag">Formación docente · PLD</span>
+    </div>`;
+  let note = '';
+  if (dpldCol != null && !isNaN(dpldCol) && Number(dpldCol) !== c.nDoc) {
+    note = `<div class="av-note">El CSV de avance registra ${c.nDoc} docente(s) para este COD; la columna Docentes PLD marca ${Number(dpldCol)}. La diferencia puede deberse a docentes cargados en una fuente y no en la otra.</div>`;
+  }
+  const docs = c.docentes.map(d => {
+    const tracks = d.tracks.map(t => {
+      const l = avLvl(t.pct), col = l==='hi'?'#2ea25a':l==='mid'?'#e0a92b':'#cdd3db';
+      const acc = t.dias == null ? 'Sin registro de acceso' : (t.dias <= 14 ? 'Último acceso hace ' + t.dias + ' día' + (t.dias!==1?'s':'') : 'Sin acceso hace ' + t.dias + ' días');
+      return `<div class="av-track">
+        <div class="av-tn">${escapeHtml(t.cert)}<small>${acc}</small></div>
+        <div class="av-brow"><span class="av-t2"><span class="av-f2" style="width:${t.pct}%;background:${col}"></span></span><span class="av-p2">${Math.round(t.pct)}%</span></div>
+        <div class="av-tc">${t.cf}/${t.ct} cursos · ${t.clf}/${t.clt} clases</div>
+      </div>`;
+    }).join('');
+    return `<div class="av-doc">
+      <div class="av-dtop"><span class="av-dn">${escapeHtml(d.nombre)}</span><span class="av-chip ${d.dormido?'dorm':'act'}">${d.dormido?'Dormido':'Activo'}</span><span class="av-davg">Avance: <b>${d.prom}%</b></span></div>
+      ${tracks}
+    </div>`;
+  }).join('');
+  return head + note + docs;
+}
+
+function wireAvanceRows() {
+  if (!AVANCE_LOADED) return;
+  document.querySelectorAll('tr.avrow[data-cod]').forEach(tr => {
+    const c = AVANCE_BY_COD[codKeyAv(tr.dataset.cod)];
+    if (c && c.nDoc > 0 && !tr.classList.contains('has-av')) {
+      tr.classList.add('has-av');
+      const first = tr.querySelector('td');
+      if (first && !first.querySelector('.av-chev')) {
+        const chev = document.createElement('span'); chev.className = 'av-chev'; chev.textContent = '\u25B8';
+        first.insertBefore(chev, first.firstChild);
+      }
+    }
+  });
+}
+
+document.addEventListener('click', e => {
+  if (!e.target.closest) return;
+  if (e.target.closest('tr.av-detail')) return;
+  const tr = e.target.closest('tr.has-av');
+  if (!tr) return;
+  const next = tr.nextElementSibling;
+  if (next && next.classList.contains('av-detail')) { next.remove(); tr.classList.remove('open'); return; }
+  const dpld = (tr.dataset.dpld == null || tr.dataset.dpld === '') ? null : Number(tr.dataset.dpld);
+  const det = document.createElement('tr'); det.className = 'av-detail';
+  det.innerHTML = `<td colspan="${tr.children.length}"><div class="av-inner">${renderAvancePanel(tr.dataset.cod, dpld)}</div></td>`;
+  tr.parentNode.insertBefore(det, tr.nextSibling);
+  tr.classList.add('open');
+});
+
 </script>
 </body>
 </html>
