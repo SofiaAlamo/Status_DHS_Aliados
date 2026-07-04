@@ -2206,7 +2206,7 @@ function parseAvance(text) {
     const trackPld = normKey(pick(o, 'track_pld'));
     if (trackPld === 'false' || trackPld === '0' || trackPld === 'no') return;
     const cert = String(pick(o, 'certificacion', 'certificación')).trim();
-    if (!cert || normKey(cert).includes('clon')) return;
+    if (!cert) return;
     const email = String(pick(o, 'email')).trim().toLowerCase();
     const nombre = String(pick(o, 'usuario')).trim() || 'Sin nombre';
     const pct = Math.max(0, Math.min(100, parseFloat(String(pick(o, 'progreso_ruta_pct') || '0').replace(',', '.')) || 0));
