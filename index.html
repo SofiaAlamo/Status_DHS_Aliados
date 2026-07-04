@@ -486,8 +486,9 @@
   tr.avrow.has-av { cursor: pointer; }
   tr.avrow.has-av:hover { background: #f6f8fb; }
   tr.avrow.has-av.open { background: #f1f5fb; }
-  .av-chev { display:inline-block; width:13px; color:#8a97ab; font-size:11px; margin-right:6px; transition:transform .18s; }
-  tr.avrow.open .av-chev { transform:rotate(90deg); color:#33507d; }
+  .av-chev { display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%; background:#eef2f7; color:#33507d; font-size:13px; font-weight:700; margin-right:9px; vertical-align:middle; transition:transform .18s, background .15s; }
+  tr.avrow.has-av:hover .av-chev { background:#dde6f3; }
+  tr.avrow.open .av-chev { transform:rotate(90deg); background:#33507d; color:#fff; }
   tr.av-detail > td { padding:0; background:#fbfcfd; }
   .av-inner { padding:6px 20px 20px 40px; }
   .av-empty { padding:16px 0; color:var(--ink-mute); font-size:13px; }
@@ -554,6 +555,17 @@
   @media(max-width:720px){ .mn-sch{grid-template-columns:1fr;gap:6px;} .mn-sc{text-align:left;} .av-track{grid-template-columns:1fr;gap:4px;} .av-tc{text-align:left;} }
   .onb-table th.gc, .onb-table td.gc { text-align:center; }
   .birrete { font-size:15px; }
+  .onb-table th.osort { cursor:pointer; user-select:none; white-space:nowrap; }
+  .onb-table th.osort:hover { background:#e3e9f2; }
+  .onb-table th .oarrow { color:#c0c8d4; font-size:10px; margin-left:1px; }
+  .onb-table th.sorted .oarrow { color:#33507d; }
+  .funnel-steps .fstep { cursor:pointer; transition:filter .12s; }
+  .funnel-steps .fstep:hover { filter:brightness(.97); }
+  .funnel-steps .fstep.active { box-shadow: inset 0 0 0 2px #33507d; }
+  .funnel-steps .fstep.active .fs-n { color:#1f3a63; }
+  .onb-fchip { display:inline-flex; align-items:center; gap:9px; background:#eef2f7; border:1px solid #d7dde6; border-radius:50px; padding:5px 8px 5px 14px; font-size:12.5px; color:#33507d; font-weight:600; margin:0 0 14px; }
+  .onb-fchip button { border:none; background:#33507d; color:#fff; border-radius:50%; width:18px; height:18px; cursor:pointer; font-size:11px; line-height:1; display:inline-flex; align-items:center; justify-content:center; }
+  .onb-fchip button:hover { background:#22375c; }
 </style>
 </head>
 <body>
@@ -2040,23 +2052,26 @@ function onbFilters() {
   return { pais: g('onbf-pais'), sist: g('onbf-sist'), op: g('onbf-op'), ment: g('onbf-ment') };
 }
 
+let ONB_SORT = { col: null, dir: 'asc' };
+let ONB_ETAPA = null;
+
 function renderOnbBody() {
   const f = onbFilters();
-  const K = KICK_ALL.filter(k =>
+  const Kbase = KICK_ALL.filter(k =>
     (f.pais === '__all__' || k.pais === f.pais) &&
     (f.sist === '__all__' || k.sistema === f.sist) &&
     (f.op   === '__all__' || k.op === f.op) &&
     (f.ment === '__all__' || k.mentor === f.ment));
 
-  const total = K.length;                          // confirmados (subetapa cargada, sin baja)
-  const rE1 = K.filter(k => k.etapa >= 1).length;  // bienvenida realizada / no aplica (o más)
-  const rE2 = K.filter(k => k.etapa >= 2).length;  // PLD aceptada / parcial (o más)
-  const rE3 = K.filter(k => k.etapa >= 3).length;  // rol admin realizada
-  const pendOnb = total - rE1;                      // confirmados con bienvenida aún pendiente
-  const renov = K.filter(k => k.op === 'Renovación').length;
-  const conq  = K.filter(k => k.op === 'Conquista').length;
-  const sinOp = K.filter(k => k.op === 'Sin dato').length;
-  const estConf = K.reduce((s, k) => s + (k.contrato || 0), 0);
+  const total = Kbase.length;
+  const rE1 = Kbase.filter(k => k.etapa >= 1).length;
+  const rE2 = Kbase.filter(k => k.etapa >= 2).length;
+  const rE3 = Kbase.filter(k => k.etapa >= 3).length;
+  const pendOnb = total - rE1;
+  const renov = Kbase.filter(k => k.op === 'Renovación').length;
+  const conq  = Kbase.filter(k => k.op === 'Conquista').length;
+  const sinOp = Kbase.filter(k => k.op === 'Sin dato').length;
+  const estConf = Kbase.reduce((s, k) => s + (k.contrato || 0), 0);
   const pct = n => total ? Math.round(n / total * 100) : 0;
 
   const hito = (label, state) => `<span class="hito ${state}">${label}</span>`;
@@ -2071,17 +2086,45 @@ function renderOnbBody() {
       <div class="kpi-card"><div class="k-num">${rE2}</div><div class="k-lbl">Capacitación iniciada</div><div class="k-sub">PLD con invitación aceptada</div></div>
     </div>`;
 
+  const act = n => ONB_ETAPA === n ? ' active' : '';
   const funnelHtml = `
     <article class="card span-12" style="margin-bottom:18px">
-      <h2>Recorrido de kick-off</h2><div class="subtitle">Cuántos colegios llegaron a cada etapa · ${total} confirmados en total</div>
+      <h2>Recorrido de kick-off</h2><div class="subtitle">Tocá una etapa para filtrar la tabla · ${total} confirmados en total</div>
       <div class="funnel-steps">
-        <div class="fstep s1"><div class="fs-n">${rE1}</div><div class="fs-t">Etapa 1 · Onboarding y bienvenida</div><div class="fs-d">${pct(rE1)}% · Bienvenida realizada o no aplica</div></div>
-        <div class="fstep s2"><div class="fs-n">${rE2}</div><div class="fs-t">Etapa 2 · Inscripción PLD y diagnóstico</div><div class="fs-d">${pct(rE2)}% · PLD con invitación aceptada</div></div>
-        <div class="fstep s3"><div class="fs-n">${rE3}</div><div class="fs-t">Etapa 3 · Rol admin e inicio mentoría</div><div class="fs-d">${pct(rE3)}% · Rol admin realizada</div></div>
+        <div class="fstep s1${act(1)}" data-etapa="1"><div class="fs-n">${rE1}</div><div class="fs-t">Etapa 1 · Onboarding y bienvenida</div><div class="fs-d">${pct(rE1)}% · Bienvenida realizada o no aplica</div></div>
+        <div class="fstep s2${act(2)}" data-etapa="2"><div class="fs-n">${rE2}</div><div class="fs-t">Etapa 2 · Inscripción PLD y diagnóstico</div><div class="fs-d">${pct(rE2)}% · PLD con invitación aceptada</div></div>
+        <div class="fstep s3${act(3)}" data-etapa="3"><div class="fs-n">${rE3}</div><div class="fs-t">Etapa 3 · Rol admin e inicio mentoría</div><div class="fs-d">${pct(rE3)}% · Rol admin realizada</div></div>
       </div>
     </article>`;
 
-  const onbRows = K.map(k => `
+  // Tabla: base + filtro por etapa del embudo (acumulado, coincide con el número del paso) + orden por columna
+  let Ktab = ONB_ETAPA ? Kbase.filter(k => k.etapa >= ONB_ETAPA) : Kbase.slice();
+  const grad = k => (AVANCE_BY_COD[codKeyAv(k.cod)] && AVANCE_BY_COD[codKeyAv(k.cod)].graduado) ? 1 : 0;
+  const TXT = ['cod','colegio','pais','sistema','op','subetapa'];
+  if (ONB_SORT.col) {
+    const c = ONB_SORT.col, d = ONB_SORT.dir === 'asc' ? 1 : -1;
+    Ktab.sort((a, b) => {
+      let r;
+      if (c === 'grad') r = grad(a) - grad(b);
+      else if (c === 'docentesPLD') { const va = a.docentesPLD == null ? -1 : a.docentesPLD, vb = b.docentesPLD == null ? -1 : b.docentesPLD; r = va - vb; }
+      else if (TXT.includes(c)) r = String(a[c] || '').localeCompare(String(b[c] || ''), 'es');
+      else r = (a[c] || 0) - (b[c] || 0);
+      return d * r;
+    });
+  }
+
+  const COLS = [
+    { k:'cod', t:'COD' }, { k:'colegio', t:'Colegio' }, { k:'pais', t:'País' }, { k:'sistema', t:'Sistema' },
+    { k:'op', t:'Operación' }, { k:'contrato', t:'Licencias', num:true }, { k:'subetapa', t:'Subetapa' },
+    { k:'etapa', t:'Hitos · E1 · E2 · E3' }, { k:'docentesPLD', t:'Docentes PLD', num:true }, { k:'grad', t:'🎓 Graduado', gc:true }
+  ];
+  const thead = '<thead><tr>' + COLS.map(c => {
+    const arrow = ONB_SORT.col === c.k ? (ONB_SORT.dir === 'asc' ? '↑' : '↓') : '↕';
+    const cls = 'osort' + (c.num ? ' num' : '') + (c.gc ? ' gc' : '') + (ONB_SORT.col === c.k ? ' sorted' : '');
+    return `<th class="${cls}" data-osort="${c.k}">${c.t} <span class="oarrow">${arrow}</span></th>`;
+  }).join('') + '</tr></thead>';
+
+  const onbRows = Ktab.map(k => `
       <tr class="avrow" data-cod="${escapeHtml(k.cod)}" data-dpld="${k.docentesPLD == null ? '' : k.docentesPLD}">
         <td>${escapeHtml(k.cod)}</td>
         <td>${escapeHtml(k.colegio)}</td>
@@ -2092,14 +2135,18 @@ function renderOnbBody() {
         <td>${escapeHtml(k.subetapa || '—')}</td>
         <td><span class="hitos">${hito('Bienvenida', stBien(k.bienvenida))}<span class="hsep"></span>${hito('Inscripción PLD', stPLD(k.statusPLD))}${hito('Diagnóstico', kbool(k.diagnostico) ? 'done' : 'pend')}<span class="hsep"></span>${hito('Rol admin', stRol(k.rolAdmin))}</span></td>
         <td class="num">${k.docentesPLD == null ? '<span class="sin-plat">—</span>' : fmt(k.docentesPLD)}</td>
-        <td class="gc">${AVANCE_BY_COD[codKeyAv(k.cod)] && AVANCE_BY_COD[codKeyAv(k.cod)].graduado ? '<span class="birrete" title="Al menos 1 docente completó una capacitación PLD al 100%">🎓</span>' : '<span class="sin-plat">—</span>'}</td>
+        <td class="gc">${grad(k) ? '<span class="birrete" title="Al menos 1 docente completó una capacitación PLD al 100%">🎓</span>' : '<span class="sin-plat">—</span>'}</td>
       </tr>`).join('') || '<tr><td colspan="10" style="text-align:center;color:var(--ink-mute);padding:20px">Sin colegios para este filtro.</td></tr>';
+
+  const ETLBL = { 1:'Etapa 1 · Onboarding y bienvenida', 2:'Etapa 2 · Inscripción PLD y diagnóstico', 3:'Etapa 3 · Rol admin e inicio mentoría' };
+  const chip = ONB_ETAPA ? `<div class="onb-fchip">Mostrando ${ETLBL[ONB_ETAPA]} · ${Ktab.length} colegio(s) <button id="onb-clear" title="Quitar filtro">✕</button></div>` : '';
 
   const onbHtml = `
     <div class="block2">
       <div class="section-title2">🚀 Colegios en kick-off</div>
       <div class="b2-explainer">Colegios confirmados (con subetapa de implementación cargada) en proceso de kick-off. Los que ya están en Playground muestran sus docentes en PLD. El birrete 🎓 marca colegios donde al menos un docente completó una capacitación al 100%.</div>
-      <div style="overflow-x:auto"><table class="onb-table"><thead><tr><th>COD</th><th>Colegio</th><th>País</th><th>Sistema</th><th>Operación</th><th class="num">Licencias</th><th>Subetapa</th><th>Hitos · E1 · E2 · E3</th><th class="num">Docentes PLD</th><th class="gc">🎓 Graduado</th></tr></thead><tbody>${onbRows}</tbody></table></div>
+      ${chip}
+      <div style="overflow-x:auto"><table class="onb-table">${thead}<tbody>${onbRows}</tbody></table></div>
       <div class="onb-legend">
         <span><span class="hito done">✓</span> Completado</span>
         <span><span class="hito prog">◐</span> En proceso</span>
@@ -2109,6 +2156,20 @@ function renderOnbBody() {
     </div>`;
 
   document.getElementById('onb-body').innerHTML = kpiHtml + funnelHtml + onbHtml;
+
+  document.querySelectorAll('#onb-body .fstep').forEach(step => step.addEventListener('click', () => {
+    const n = Number(step.dataset.etapa);
+    ONB_ETAPA = ONB_ETAPA === n ? null : n;
+    renderOnbBody();
+  }));
+  document.querySelectorAll('#onb-body .onb-table th.osort').forEach(th => th.addEventListener('click', () => {
+    const k = th.dataset.osort;
+    if (ONB_SORT.col === k) ONB_SORT.dir = ONB_SORT.dir === 'asc' ? 'desc' : 'asc';
+    else { ONB_SORT.col = k; ONB_SORT.dir = 'asc'; }
+    renderOnbBody();
+  }));
+  const clr = document.getElementById('onb-clear');
+  if (clr) clr.addEventListener('click', e => { e.stopPropagation(); ONB_ETAPA = null; renderOnbBody(); });
 
   const setTxt = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
   setTxt('onbstat-total', total);
