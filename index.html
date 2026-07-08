@@ -1108,7 +1108,7 @@ function boot() {
   });
 
   const pill1 = document.getElementById('tabpill-impl');
-  if (pill1) pill1.textContent = RAW.rows.length;
+  if (pill1) pill1.textContent = getRowsEnVista().length;
   setupTabs();
   loadOnboarding().catch(e => console.error('Onboarding:', e));
   loadAvance();
