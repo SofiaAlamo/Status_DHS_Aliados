@@ -2269,7 +2269,7 @@ function renderAvancePanel(cod, dpldCol) {
     </div>`;
   let note = '';
   if (dpldCol != null && !isNaN(dpldCol) && Number(dpldCol) !== c.nDoc) {
-    note = `<div class="av-note">El CSV de avance registra ${c.nDoc} docente(s) para este COD; la columna Docentes PLD marca ${Number(dpldCol)}. La diferencia puede deberse a docentes cargados en una fuente y no en la otra.</div>`;
+    note = `<div class="av-note">El desglose muestra ${c.nDoc} docente(s) para este COD; la columna Docentes PLD marca ${Number(dpldCol)}. La diferencia puede deberse a que Docentes PLD cuenta inscriptos en 2026, mientras que el desglose incluye también docentes inscriptos en años anteriores.</div>`;
   }
   const docs = c.docentes.map(d => {
     const tracks = d.tracks.map(t => {
