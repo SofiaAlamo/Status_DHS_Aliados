@@ -600,6 +600,7 @@
     <nav class="tabbar">
       <button class="tab active" data-tab="impl">Implementación · ciclo activo <span class="tabpill" id="tabpill-impl">—</span></button>
       <button class="tab" data-tab="onb">Kick-off próximo ciclo <span class="tabpill" id="tabpill-onb">…</span></button>
+      <button class="tab" data-tab="certif">Certificaciones otorgadas <span class="tabpill" id="tabpill-certif">…</span></button>
     </nav>
   </div>
 </div>
@@ -695,6 +696,32 @@
 
   <section id="tab-onb" class="hidden">
     <div id="onb-content"><div class="onb-loading">Cargando datos de kick-off…</div></div>
+  </section>
+
+  <section id="tab-certif" class="hidden">
+    <style>
+      .cert-tag { display:inline-block; padding:2px 8px; border-radius:50px; font-size:12px; font-weight:700; font-variant-numeric:tabular-nums; }
+      .cert-v { background:rgba(39,160,90,.14); color:var(--verde); }
+      .cert-a { background:rgba(212,160,23,.16); color:var(--amarillo); }
+      .cert-r { background:rgba(192,57,43,.12); color:var(--rojo); }
+      .cert-cod { font-weight:700; font-size:11px; color:var(--ink-mute); }
+      .certif-foot { font-size:10.5px; color:var(--ink-mute); margin:10px 2px 0; line-height:1.5; }
+      .certif-foot .dot { font-weight:700; }
+      .certif-cards { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:16px; }
+      @media (max-width:820px) { .certif-cards { grid-template-columns:1fr; } }
+      .certif-card { background:#fff; border:1px solid var(--line); border-radius:10px; padding:14px; }
+      .certif-card h4 { font-family:"Barlow Condensed",sans-serif; font-weight:700; font-size:15px; text-transform:uppercase; letter-spacing:.03em; margin:0 0 2px; }
+      .certif-card .csub { font-size:11px; color:var(--ink-mute); margin:0 0 10px; }
+      .certif-chartwrap { position:relative; height:200px; }
+      .certif-note { font-size:10.5px; color:var(--ink-mute); margin-top:8px; line-height:1.4; }
+      .certif-sum { width:100%; border-collapse:collapse; font-variant-numeric:tabular-nums; }
+      .certif-sum th { font-size:9.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-mute); font-weight:700; text-align:left; padding:6px 8px; border-bottom:1px solid var(--line); }
+      .certif-sum th.n, .certif-sum td.n { text-align:right; }
+      .certif-sum td { font-size:12.5px; padding:7px 8px; border-bottom:1px solid var(--line); }
+      .certif-sum tbody tr:last-child td { border-bottom:none; }
+      .certif-sum tr.tot td { font-weight:700; background:#fafafa; }
+    </style>
+    <div id="certif-content"><div class="onb-loading">Cargando certificaciones otorgadas…</div></div>
   </section>
 </div>
 
@@ -1111,6 +1138,7 @@ function boot() {
   if (pill1) pill1.textContent = getRowsEnVista().length;
   setupTabs();
   loadOnboarding().catch(e => console.error('Onboarding:', e));
+  loadCertif().catch(e => console.error('Certificaciones:', e));
   loadAvance();
 }
 
@@ -1915,9 +1943,10 @@ function setupTabs() {
 }
 function switchTab(name) {
   document.querySelectorAll('.tabbar .tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
-  const SEC = { impl: 'dashboard', onb: 'tab-onb', mentores: 'tab-mentores' };
+  const SEC = { impl: 'dashboard', onb: 'tab-onb', mentores: 'tab-mentores', certif: 'tab-certif' };
   Object.entries(SEC).forEach(([n, id]) => { const el = document.getElementById(id); if (el) el.classList.toggle('hidden', n !== name); });
   if (name === 'mentores' && typeof renderMentores === 'function') renderMentores();
+  if (name === 'certif' && typeof CERTIF_LOADED !== 'undefined' && CERTIF_LOADED) renderCertifBody();
 }
 
 function kickEnVista(k) {
@@ -2183,6 +2212,337 @@ function renderOnbBody() {
 }
 
 /* ═══════════ AVANCE DOCENTE EN PLD · CSV de avance, cruce por COD ═══════════ */
+/* ═══════════════ PESTAÑA 3 · CERTIFICACIONES OTORGADAS (ALIADOS) ═══════════════ */
+/* Lee la hoja "Certificaciones" (gid 1709700298) del mismo Status_Schools 2026 y la
+   limita al scope de la vista (país/red del token) y a colegios Santillana en status.
+   Requiere que esa pestaña esté publicada en la web. */
+const CSV_URL_CERTIF = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSPFRKVvwUioC_7rKCblIMz7Cu7qvQpQI8LJM982dThQkT_hLqaJgwU2Js8OhEZag4aJ3_5GCfvzSwd/pub?gid=1709700298&single=true&output=csv';
+let CERTIF_ALL = [];
+let CERTIF_LOADED = false;
+let CERTIF_SORT = { key: 'certif', dir: 'desc' };
+const codKeyC = c => String(c || '').toUpperCase().replace(/\s+/g, '');
+
+function certColIdx(H, ...names) {
+  const HN = H.map(h => normKey(h));
+  for (const nm of names) { const i = HN.indexOf(normKey(nm)); if (i >= 0) return i; }
+  return -1;
+}
+function certInt(v) {
+  if (v == null) return null;
+  const s = String(v).replace(/\./g, '').replace(/[^\d\-]/g, '').trim();
+  if (s === '') return null;
+  const n = parseInt(s, 10); return isNaN(n) ? null : n;
+}
+function certPctNum(v) {
+  if (v == null) return null;
+  const s = String(v).replace('%', '').replace(',', '.').trim();
+  if (s === '' || s === '-') return null;
+  const n = parseFloat(s); return isNaN(n) ? null : n;
+}
+function certPctFmt(raw) { return raw ? String(raw).replace(/\s*%\s*$/, '%').trim() : null; }
+function certPondFmt(n) { return (Math.round(n * 10) / 10).toString().replace('.', ',') + '%'; }
+
+function parseCertif(text) {
+  const arr = (Papa.parse(text, { skipEmptyLines: true }).data) || [];
+  let hi = arr.findIndex(row => Array.isArray(row) && row.some(c => normKey(c) === 'cod'));
+  if (hi < 0) hi = 0;
+  const H = arr[hi];
+  const i = {
+    pais: certColIdx(H, 'País', 'Pais'),
+    cod:  certColIdx(H, 'COD', 'Cod', 'Código', 'Codigo'),
+    esc:  certColIdx(H, 'Escuela', 'Colegio', 'Nombre'),
+    rut:  certColIdx(H, 'Rutas'),
+    est:  certColIdx(H, 'Estudiantes'),
+    ins:  certColIdx(H, 'Inscripciones'),
+    cert: certColIdx(H, 'Cantidad de certificados', 'Certificados', 'Cantidad certificados'),
+    tc:   certColIdx(H, 'Tasa de certificación', 'Tasa de certificacion', 'Tasa de certificación*', 'Tasa de certificacion*'),
+    to:   certColIdx(H, 'Tasa de aprobación cursos obligatorios', 'Tasa de aprobacion cursos obligatorios'),
+    tn:   certColIdx(H, 'Tasa de aprobación cursos no obligatorios', 'Tasa de aprobacion cursos no obligatorios')
+  };
+  let iAno = certColIdx(H, 'Año/Ciclo', 'Año / Ciclo', 'Año/ciclo', 'Ciclo', 'Año', 'Ano', 'Año escolar', 'Ciclo escolar', 'Gestión', 'Gestion', 'Periodo', 'Período');
+  if (iAno < 0) iAno = H.findIndex(h => /a[nñ]o|ciclo|gesti[oó]n|per[ií]odo/i.test(String(h)));
+  const out = [];
+  for (let r = hi + 1; r < arr.length; r++) {
+    const row = arr[r]; if (!Array.isArray(row)) continue;
+    const cod = clean(i.cod >= 0 ? row[i.cod] : '');
+    const esc = clean(i.esc >= 0 ? row[i.esc] : '');
+    if (!cod && !esc) continue;
+    const cU = codKeyC(cod);
+    if (!cU || ['N/A', '#N/A', 'NA', '#NA'].includes(cU)) continue;
+    const tcRaw = clean(i.tc >= 0 ? row[i.tc] : '');
+    out.push({
+      cod, escuela: esc || 'Sin nombre',
+      pais: clean(i.pais >= 0 ? row[i.pais] : '') || 'Sin dato',
+      rutas: certInt(i.rut >= 0 ? row[i.rut] : null),
+      estudiantes: certInt(i.est >= 0 ? row[i.est] : null),
+      inscripciones: certInt(i.ins >= 0 ? row[i.ins] : null),
+      certificados: certInt(i.cert >= 0 ? row[i.cert] : null),
+      tcRaw, toRaw: clean(i.to >= 0 ? row[i.to] : ''), tnRaw: clean(i.tn >= 0 ? row[i.tn] : ''),
+      tcNum: certPctNum(tcRaw),
+      toNum: certPctNum(i.to >= 0 ? row[i.to] : null),
+      tnNum: certPctNum(i.tn >= 0 ? row[i.tn] : null),
+      ano: iAno >= 0 ? clean(row[iAno]) : ''
+    });
+  }
+  return out;
+}
+
+async function loadCertif() {
+  const cont = document.getElementById('certif-content');
+  try {
+    const res = await fetch(CSV_URL_CERTIF);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const rows = parseCertif(await res.text());
+    const byCod = {};
+    (RAW ? (RAW.rows || []).concat(RAW.rowsNoActivos || []) : []).forEach(s => { if (s.cod) byCod[codKeyC(s.cod)] = s; });
+    rows.forEach(c => {
+      const m = byCod[codKeyC(c.cod)];
+      c.opMode     = m ? m.opMode     : 'Sin dato';
+      c.red        = m ? m.red        : 'Sin red';
+      c.calendario = m ? m.calendario : 'Sin calendario';
+      c.mentor     = m ? m.mentor     : 'Sin asignar';
+      c.enStatus   = !!m;
+      if (m && (!c.pais || c.pais === 'Sin dato')) c.pais = m.pais;
+    });
+    // Scope de la vista: solo colegios Santillana en status (RAW ya está filtrado a Santillana)
+    // y dentro del país/red del token.
+    const inL = (val, list) => !list || (Array.isArray(list)
+      ? list.some(x => String(x).toLowerCase() === String(val).toLowerCase())
+      : String(list).toLowerCase() === String(val).toLowerCase());
+    const L = (typeof LOCKED !== 'undefined' && LOCKED) ? LOCKED : {};
+    CERTIF_ALL = rows.filter(c => c.enStatus && inL(c.pais, L.pais) && inL(c.red, L.red));
+    CERTIF_LOADED = true;
+    buildCertifShell();
+    renderCertifBody();
+  } catch (err) {
+    console.error('Certificaciones:', err);
+    if (cont) cont.innerHTML = '<div class="onb-error">No se pudieron cargar las certificaciones.<br><small>' + escapeHtml(err.message || String(err)) + '</small><br><small>Verificá que la pestaña «Certificaciones» esté publicada en la web.</small></div>';
+  }
+}
+
+function certOpts(arr) {
+  return ['<option value="__all__">Todos</option>']
+    .concat(uniqSorted(arr).map(v => '<option>' + escapeHtml(v) + '</option>')).join('');
+}
+
+function buildCertifShell() {
+  const cont = document.getElementById('certif-content');
+  const pill = document.getElementById('tabpill-certif');
+  if (pill) pill.textContent = CERTIF_ALL.length;
+  const anos = uniqSorted(CERTIF_ALL.map(c => c.ano).filter(Boolean)).sort().reverse();
+  const anoFilter = anos.length
+    ? '<div class="filter" id="cwrap-ano"><label for="cf-ano">Año / Ciclo</label><select id="cf-ano"><option value="__all__">Todos</option>' + anos.map(a => '<option>' + escapeHtml(a) + '</option>').join('') + '</select></div>'
+    : '';
+  const cols = uniqSorted(CERTIF_ALL.map(c => c.escuela).filter(e => e !== 'Sin nombre'));
+  cont.innerHTML =
+    '<section class="filters onb-filters">' +
+      '<div class="filter" id="cwrap-pais"><label for="cf-pais">País</label><select id="cf-pais">' + certOpts(CERTIF_ALL.map(c => c.pais)) + '</select></div>' +
+      '<div class="filter" id="cwrap-red"><label for="cf-red">Red</label><select id="cf-red">' + certOpts(CERTIF_ALL.map(c => c.red)) + '</select></div>' +
+      '<div class="filter" id="cwrap-cal"><label for="cf-cal">Calendario</label><select id="cf-cal">' + certOpts(CERTIF_ALL.map(c => c.calendario)) + '</select></div>' +
+      '<div class="filter" id="cwrap-ment"><label for="cf-ment">Mentor</label><select id="cf-ment">' + certOpts(CERTIF_ALL.map(c => c.mentor).filter(m => m !== 'Sin asignar')) + '</select></div>' +
+      anoFilter +
+      '<div class="filter" id="cwrap-col"><label for="cf-col">Colegio</label><input type="text" id="cf-col" list="clist-col" placeholder="Escribí para buscar…" autocomplete="off"><datalist id="clist-col">' + cols.map(e => '<option>' + escapeHtml(e) + '</option>').join('') + '</datalist></div>' +
+      '<div class="filter-stats">' +
+        '<div class="stat"><div class="num" id="cstat-col">—</div><div class="lbl">Colegios</div></div>' +
+        '<div class="stat"><div class="num" id="cstat-est">—</div><div class="lbl">Estudiantes</div></div>' +
+        '<div class="stat"><div class="num" id="cstat-cert">—</div><div class="lbl">Certificados</div></div>' +
+        '<div class="stat"><div class="num" id="cstat-tasa">—</div><div class="lbl">Tasa cert. ponderada</div><div class="stat-note">Σ certif. / Σ inscrip.</div></div>' +
+      '</div>' +
+    '</section>' +
+    '<div class="certif-cards">' +
+      '<div class="certif-card"><h4>Resumen por país</h4><div class="csub">Respeta los filtros activos, incluido Ciclo</div><div id="certif-summary"></div></div>' +
+      '<div class="certif-card"><h4>Certificados por ciclo</h4><div class="csub">Todos los ciclos · ignora el filtro de Ciclo</div><div class="certif-chartwrap"><canvas id="certif-chart"></canvas></div><div class="certif-note" id="certif-chart-note"></div></div>' +
+    '</div>' +
+    '<div id="certif-body"></div>';
+  ['cf-pais', 'cf-red', 'cf-cal', 'cf-ment'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.addEventListener('change', renderCertifBody);
+  });
+  const anoEl = document.getElementById('cf-ano');
+  if (anoEl) {
+    if (anos.length) anoEl.value = anos[0]; // por defecto, ciclo más reciente → una fila por organización
+    anoEl.addEventListener('change', () => {
+      CERTIF_SORT = anoEl.value === '__all__' ? { key: 'colegio', dir: 'asc' } : { key: 'certif', dir: 'desc' };
+      renderCertifBody();
+    });
+  }
+  const ci = document.getElementById('cf-col'); if (ci) ci.addEventListener('input', renderCertifBody);
+}
+
+function certifFilters() {
+  const g = id => { const e = document.getElementById(id); return e ? e.value : '__all__'; };
+  const colEl = document.getElementById('cf-col');
+  return { pais: g('cf-pais'), op: g('cf-opmode'), red: g('cf-red'), cal: g('cf-cal'), ment: g('cf-ment'), ano: g('cf-ano'), col: (colEl ? colEl.value : '').trim().toLowerCase() };
+}
+
+function renderCertifBody() {
+  const f = certifFilters();
+  const rows = CERTIF_ALL.filter(c =>
+    (f.pais === '__all__' || c.pais === f.pais) &&
+    (f.op   === '__all__' || c.opMode === f.op) &&
+    (f.red  === '__all__' || c.red === f.red) &&
+    (f.cal  === '__all__' || c.calendario === f.cal) &&
+    (f.ment === '__all__' || c.mentor === f.ment) &&
+    (f.ano  === '__all__' || !f.ano || c.ano === f.ano) &&
+    (!f.col || c.escuela.toLowerCase().includes(f.col))
+  );
+  // Para el gráfico ciclo-por-ciclo: mismo filtrado pero SIN el filtro de Ciclo
+  const rowsChart = CERTIF_ALL.filter(c =>
+    (f.pais === '__all__' || c.pais === f.pais) &&
+    (f.op   === '__all__' || c.opMode === f.op) &&
+    (f.red  === '__all__' || c.red === f.red) &&
+    (f.cal  === '__all__' || c.calendario === f.cal) &&
+    (f.ment === '__all__' || c.mentor === f.ment) &&
+    (!f.col || c.escuela.toLowerCase().includes(f.col))
+  );
+  const sumEst = rows.reduce((s, c) => s + (c.estudiantes || 0), 0);
+  const sumCert = rows.reduce((s, c) => s + (c.certificados || 0), 0);
+  const conCert = rows.filter(c => c.certificados != null);
+  const numP = conCert.reduce((s, c) => s + (c.certificados || 0), 0);
+  const denP = conCert.reduce((s, c) => s + (c.inscripciones || 0), 0);
+  const pond = denP > 0 ? (numP / denP * 100) : null;
+  const set = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+  set('cstat-col', new Set(rows.map(c => c.cod)).size.toLocaleString('es-AR'));
+  set('cstat-est', sumEst.toLocaleString('es-AR'));
+  set('cstat-cert', sumCert.toLocaleString('es-AR'));
+  const tEl = document.getElementById('cstat-tasa');
+  if (tEl) {
+    tEl.textContent = pond == null ? '—' : certPondFmt(pond);
+    tEl.style.color = pond == null ? '' : (pond > 50 ? 'var(--verde)' : pond < 30 ? 'var(--rojo)' : 'var(--amarillo)');
+  }
+  const V = c => ({
+    colegio: c.escuela.toLowerCase(), pais: c.pais.toLowerCase(),
+    rutas: c.rutas == null ? -1 : c.rutas, estudiantes: c.estudiantes == null ? -1 : c.estudiantes,
+    inscripciones: c.inscripciones == null ? -1 : c.inscripciones, certif: c.certificados == null ? -1 : c.certificados,
+    tc: c.tcNum == null ? -1 : c.tcNum, to: c.toNum == null ? -1 : c.toNum, tn: c.tnNum == null ? -1 : c.tnNum,
+    ano: c.ano
+  })[CERTIF_SORT.key];
+  rows.sort((a, b) => {
+    const x = V(a), y = V(b);
+    let r = x < y ? -1 : x > y ? 1 : 0;
+    r = CERTIF_SORT.dir === 'asc' ? r : -r;
+    if (r !== 0) return r;
+    const e = a.escuela.toLowerCase().localeCompare(b.escuela.toLowerCase());
+    if (e !== 0) return e;               // misma organización contigua…
+    return String(b.ano).localeCompare(String(a.ano)); // …y su ciclo más reciente primero
+  });
+  renderCertifSummary(rows);
+  drawCertifChart(rowsChart);
+  const hasAno = CERTIF_ALL.some(c => c.ano);
+  const arrow = k => '<span class="oarrow">' + (CERTIF_SORT.key === k ? (CERTIF_SORT.dir === 'asc' ? '▲' : '▼') : '↕') + '</span>';
+  const cls = k => 'osort' + (CERTIF_SORT.key === k ? ' sorted' : '');
+  const nd = '<span class="sin-plat">—</span>';
+  const num = v => v == null ? nd : v.toLocaleString('es-AR');
+  const tagTC = c => {
+    if (c.tcNum == null) return c.tcRaw ? escapeHtml(certPctFmt(c.tcRaw)) : nd;
+    const cl = c.tcNum > 50 ? 'cert-v' : c.tcNum < 30 ? 'cert-r' : 'cert-a';
+    return '<span class="cert-tag ' + cl + '">' + escapeHtml(certPctFmt(c.tcRaw)) + '</span>';
+  };
+  const plain = raw => raw ? escapeHtml(certPctFmt(raw)) : nd;
+  const thead = '<thead><tr>' +
+    '<th class="' + cls('colegio') + '" data-k="colegio">Escuela ' + arrow('colegio') + '</th>' +
+    '<th class="' + cls('pais') + '" data-k="pais">País ' + arrow('pais') + '</th>' +
+    '<th class="num ' + cls('rutas') + '" data-k="rutas">Rutas ' + arrow('rutas') + '</th>' +
+    '<th class="num ' + cls('estudiantes') + '" data-k="estudiantes">Estudiantes ' + arrow('estudiantes') + '</th>' +
+    '<th class="num ' + cls('inscripciones') + '" data-k="inscripciones">Inscripciones ' + arrow('inscripciones') + '</th>' +
+    '<th class="num ' + cls('certif') + '" data-k="certif">Certificados ' + arrow('certif') + '</th>' +
+    '<th class="num ' + cls('tc') + '" data-k="tc">Tasa cert.* ' + arrow('tc') + '</th>' +
+    '<th class="num ' + cls('to') + '" data-k="to">Aprob. oblig. ' + arrow('to') + '</th>' +
+    '<th class="num ' + cls('tn') + '" data-k="tn">Aprob. no oblig. ' + arrow('tn') + '</th>' +
+    (hasAno ? '<th class="' + cls('ano') + '" data-k="ano">Año/Ciclo ' + arrow('ano') + '</th>' : '') +
+    '</tr></thead>';
+  const body = rows.map(c => '<tr>' +
+    '<td><span class="cert-cod">' + escapeHtml(c.cod) + '</span> · <b>' + escapeHtml(c.escuela) + '</b></td>' +
+    '<td>' + escapeHtml(c.pais) + '</td>' +
+    '<td class="num">' + num(c.rutas) + '</td>' +
+    '<td class="num">' + num(c.estudiantes) + '</td>' +
+    '<td class="num">' + num(c.inscripciones) + '</td>' +
+    '<td class="num">' + num(c.certificados) + '</td>' +
+    '<td class="num">' + tagTC(c) + '</td>' +
+    '<td class="num">' + plain(c.toRaw) + '</td>' +
+    '<td class="num">' + plain(c.tnRaw) + '</td>' +
+    (hasAno ? '<td>' + (c.ano ? escapeHtml(c.ano) : nd) + '</td>' : '') +
+    '</tr>').join('');
+  const colspan = hasAno ? 10 : 9;
+  const empty = '<tr><td colspan="' + colspan + '" style="text-align:center;color:var(--ink-mute);padding:24px">Sin certificaciones para los filtros seleccionados.</td></tr>';
+  const foot = '<div class="certif-foot">* Tasa de certificación = certificados / inscripciones del ciclo. Semáforo: ' +
+    '<span class="dot" style="color:var(--rojo)">●</span> &lt;30% · ' +
+    '<span class="dot" style="color:var(--amarillo)">●</span> 30–50% · ' +
+    '<span class="dot" style="color:var(--verde)">●</span> &gt;50%. Celdas vacías en la hoja se muestran como “—”.</div>';
+  document.getElementById('certif-body').innerHTML =
+    '<div style="overflow-x:auto"><table class="onb-table">' + thead + '<tbody>' + (body || empty) + '</tbody></table></div>' + foot;
+  document.querySelectorAll('#certif-body .onb-table th.osort').forEach(th => th.addEventListener('click', () => {
+    const k = th.dataset.k;
+    if (CERTIF_SORT.key === k) CERTIF_SORT.dir = CERTIF_SORT.dir === 'asc' ? 'desc' : 'asc';
+    else CERTIF_SORT = { key: k, dir: (k === 'colegio' || k === 'pais' || k === 'ano') ? 'asc' : 'desc' };
+    renderCertifBody();
+  }));
+}
+
+function renderCertifSummary(rows) {
+  const el = document.getElementById('certif-summary'); if (!el) return;
+  const by = {};
+  rows.forEach(c => {
+    const k = c.pais || 'Sin dato';
+    const o = by[k] || (by[k] = { pais: k, ins: 0, cert: 0, insCert: 0 });
+    o.ins += c.inscripciones || 0;
+    if (c.certificados != null) { o.cert += c.certificados; o.insCert += c.inscripciones || 0; }
+  });
+  const arr = Object.values(by).sort((a, b) => b.cert - a.cert);
+  const tot = { ins: 0, cert: 0, insCert: 0 };
+  arr.forEach(o => { tot.ins += o.ins; tot.cert += o.cert; tot.insCert += o.insCert; });
+  const tasa = o => o.insCert > 0 ? (o.cert / o.insCert * 100) : null;
+  const ttag = v => {
+    if (v == null) return '<span class="sin-plat">—</span>';
+    const cl = v > 50 ? 'cert-v' : v < 30 ? 'cert-r' : 'cert-a';
+    return '<span class="cert-tag ' + cl + '">' + certPondFmt(v) + '</span>';
+  };
+  const n = v => v.toLocaleString('es-AR');
+  const body = arr.map(o => '<tr><td>' + escapeHtml(o.pais) + '</td><td class="n">' + n(o.ins) + '</td><td class="n">' + n(o.cert) + '</td><td class="n">' + ttag(tasa(o)) + '</td></tr>').join('');
+  const totRow = '<tr class="tot"><td>Total</td><td class="n">' + n(tot.ins) + '</td><td class="n">' + n(tot.cert) + '</td><td class="n">' + ttag(tasa(tot)) + '</td></tr>';
+  el.innerHTML = '<table class="certif-sum"><thead><tr><th>País</th><th class="n">Inscrip.</th><th class="n">Certif.</th><th class="n">Tasa cert.</th></tr></thead><tbody>' +
+    (body || '<tr><td colspan="4" style="text-align:center;color:var(--ink-mute);padding:16px">Sin datos para los filtros seleccionados</td></tr>') +
+    (arr.length ? totRow : '') + '</tbody></table>';
+}
+
+const CERTIF_CHART_COLORS = ['#FFC72C', '#111111', '#27a05a', '#4a90d9', '#d4a017', '#c0392b', '#8e44ad', '#16a085', '#e67e22'];
+
+function drawCertifChart(rows) {
+  const cv = document.getElementById('certif-chart');
+  const noteEl = document.getElementById('certif-chart-note');
+  if (!cv || typeof Chart === 'undefined') return;
+  destroy('certif-chart');
+  const ciclos = uniqSorted(rows.map(c => c.ano).filter(Boolean)); // asc
+  const paises = uniqSorted(rows.map(c => c.pais).filter(Boolean));
+  if (!ciclos.length) { if (noteEl) noteEl.textContent = ''; return; }
+  const datasets = paises.map((p, i) => ({
+    label: p,
+    data: ciclos.map(cy => rows.filter(c => c.pais === p && c.ano === cy).reduce((s, c) => s + (c.certificados || 0), 0)),
+    backgroundColor: CERTIF_CHART_COLORS[i % CERTIF_CHART_COLORS.length],
+    borderWidth: 0, maxBarThickness: 64, stack: 'cert'
+  }));
+  CHARTS['certif-chart'] = new Chart(cv, {
+    type: 'bar',
+    data: { labels: ciclos, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: {
+        x: { stacked: true, grid: { display: false }, ticks: { color: '#1a1a1a', font: { size: 12 } } },
+        y: { stacked: true, beginAtZero: true, grid: { color: '#e4e4e4' }, ticks: { color: '#888', font: { size: 11 } } }
+      },
+      plugins: {
+        legend: { display: paises.length > 1, position: 'bottom', labels: { boxWidth: 10, font: { size: 11 }, color: '#555' } },
+        tooltip: { callbacks: { label: c => c.dataset.label + ': ' + (c.parsed.y || 0).toLocaleString('es-AR') + ' certif.' } }
+      }
+    }
+  });
+  // Nota de cobertura: primer ciclo con datos por país (los ciclos no cubren a todos los países)
+  const desde = paises.map(p => {
+    const cs = rows.filter(c => c.pais === p && (c.certificados != null || c.inscripciones != null)).map(c => c.ano).filter(Boolean).sort();
+    return cs.length ? escapeHtml(p) + ': ' + escapeHtml(cs[0]) : null;
+  }).filter(Boolean);
+  if (noteEl) noteEl.textContent = desde.length ? ('Datos desde — ' + desde.join(' · ')) : '';
+}
+
 const CSV_URL_AVANCE = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSPFRKVvwUioC_7rKCblIMz7Cu7qvQpQI8LJM982dThQkT_hLqaJgwU2Js8OhEZag4aJ3_5GCfvzSwd/pub?gid=633679674&single=true&output=csv';
 let AVANCE_BY_COD = {};
 let AVANCE_LOADED = false;
