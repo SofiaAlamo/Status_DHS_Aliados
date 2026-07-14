@@ -2216,6 +2216,7 @@ function renderOnbBody() {
 /* Lee la hoja "Certificaciones" (gid 1709700298) del mismo Status_Schools 2026 y la
    limita al scope de la vista (país/red del token) y a colegios Santillana en status.
    Requiere que esa pestaña esté publicada en la web. */
+const CSV_URL_CORE = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSPFRKVvwUioC_7rKCblIMz7Cu7qvQpQI8LJM982dThQkT_hLqaJgwU2Js8OhEZag4aJ3_5GCfvzSwd/pub?gid=1092641323&single=true&output=csv';
 const CSV_URL_CERTIF = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSPFRKVvwUioC_7rKCblIMz7Cu7qvQpQI8LJM982dThQkT_hLqaJgwU2Js8OhEZag4aJ3_5GCfvzSwd/pub?gid=1709700298&single=true&output=csv';
 let CERTIF_ALL = [];
 let CERTIF_LOADED = false;
@@ -2287,16 +2288,48 @@ function parseCertif(text) {
   return out;
 }
 
+function parseCore(text) {
+  const arr = (Papa.parse(text, { skipEmptyLines: true }).data) || [];
+  let hi = arr.findIndex(row => Array.isArray(row) && row.some(c => normKey(c) === 'cod'));
+  if (hi < 0) hi = 0;
+  const H = arr[hi];
+  const iCod  = certColIdx(H, 'COD', 'Cod', 'Código', 'Codigo');
+  const iPais = certColIdx(H, 'País', 'Pais');
+  const iOp   = certColIdx(H, 'Operation mode', 'Operation Mode', 'Modo de operación', 'Modo de operacion', 'Op mode');
+  const iRed  = certColIdx(H, 'Red');
+  const iCal  = certColIdx(H, 'Calendario');
+  const iMent = certColIdx(H, 'Mentor');
+  const out = [];
+  for (let r = hi + 1; r < arr.length; r++) {
+    const row = arr[r]; if (!Array.isArray(row)) continue;
+    const cod = clean(iCod >= 0 ? row[iCod] : '');
+    if (!cod) continue;
+    out.push({
+      cod,
+      pais: clean(iPais >= 0 ? row[iPais] : '') || 'Sin dato',
+      opMode: clean(iOp >= 0 ? row[iOp] : '') || 'Sin dato',
+      red: clean(iRed >= 0 ? row[iRed] : '') || 'Sin red',
+      calendario: clean(iCal >= 0 ? row[iCal] : '') || 'Sin calendario',
+      mentor: clean(iMent >= 0 ? row[iMent] : '') || 'Sin asignar'
+    });
+  }
+  return out;
+}
+
 async function loadCertif() {
   const cont = document.getElementById('certif-content');
   try {
-    const res = await fetch(CSV_URL_CERTIF);
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    const rows = parseCertif(await res.text());
-    const byCod = {};
-    (RAW ? (RAW.rows || []).concat(RAW.rowsNoActivos || []) : []).forEach(s => { if (s.cod) byCod[codKeyC(s.cod)] = s; });
+    const [certifRes, coreRes] = await Promise.all([fetch(CSV_URL_CERTIF), fetch(CSV_URL_CORE)]);
+    if (!certifRes.ok) throw new Error('HTTP ' + certifRes.status);
+    const rows = parseCertif(await certifRes.text());
+    // Cruce contra Core 2026 (fuente completa de opmode/red/país/calendario/mentor); RAW como respaldo
+    const coreByCod = {};
+    if (coreRes.ok) parseCore(await coreRes.text()).forEach(s => { if (s.cod) coreByCod[codKeyC(s.cod)] = s; });
+    const rawByCod = {};
+    (RAW ? (RAW.rows || []).concat(RAW.rowsNoActivos || []) : []).forEach(s => { if (s.cod) rawByCod[codKeyC(s.cod)] = s; });
     rows.forEach(c => {
-      const m = byCod[codKeyC(c.cod)];
+      const k = codKeyC(c.cod);
+      const m = coreByCod[k] || rawByCod[k];
       c.opMode     = m ? m.opMode     : 'Sin dato';
       c.red        = m ? m.red        : 'Sin red';
       c.calendario = m ? m.calendario : 'Sin calendario';
@@ -2310,7 +2343,7 @@ async function loadCertif() {
       ? list.some(x => String(x).toLowerCase() === String(val).toLowerCase())
       : String(list).toLowerCase() === String(val).toLowerCase());
     const L = (typeof LOCKED !== 'undefined' && LOCKED) ? LOCKED : {};
-    CERTIF_ALL = rows.filter(c => c.enStatus && inL(c.pais, L.pais) && inL(c.red, L.red));
+    CERTIF_ALL = rows.filter(c => c.opMode.toLowerCase() === VISTA_OPMODE.toLowerCase() && inL(c.pais, L.pais) && inL(c.red, L.red));
     CERTIF_LOADED = true;
     buildCertifShell();
     renderCertifBody();
