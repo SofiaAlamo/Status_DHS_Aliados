@@ -2220,7 +2220,7 @@ const CSV_URL_CERTIF = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSPFRKVv
 let CERTIF_ALL = [];
 let CERTIF_LOADED = false;
 let CERTIF_SORT = { key: 'certif', dir: 'desc' };
-const codKeyC = c => String(c || '').toUpperCase().replace(/\s+/g, '');
+const codKeyC = c => String(c || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z0-9]/g, '');
 
 function certColIdx(H, ...names) {
   const HN = H.map(h => normKey(h));
