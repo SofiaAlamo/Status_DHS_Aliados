@@ -301,11 +301,8 @@
   .sem-dot.sin_dato { background: var(--gris); }
 
   .vitalidad-cell { display: inline-flex; align-items: center; gap: 8px; justify-content: flex-end; width: 100%; }
-  .pct-bar { width: 50px; height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; position: relative; }
-  .pct-bar::after { content: ''; display: block; height: 100%; background: var(--dh-yellow); width: var(--w, 0%); }
-  .pct-bar.rojo::after     { background: var(--rojo); }
-  .pct-bar.amarillo::after { background: var(--amarillo); }
-  .pct-bar.verde::after    { background: var(--verde); }
+  .vitalidad-bar { width: 50px; height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; position: relative; }
+  .vitalidad-bar::after { content: ''; display: block; height: 100%; background: var(--dh-yellow); width: var(--w, 0%); }
 
   .sem-stack { display: inline-flex; align-items: center; gap: 10px; width: 100%; }
   .sem-stack-bar { display: flex; height: 10px; width: 140px; border-radius: 3px; overflow: hidden; background: var(--line); flex-shrink: 0; }
@@ -686,8 +683,6 @@
             <th data-sort="mentor">Mentor <span class="arrow">↕</span></th>
             <th class="center" data-sort="semaforo">Semáforo <span class="arrow">↕</span></th>
             <th class="num" data-sort="estudiantes">Estudiantes <span class="arrow">↕</span></th>
-            <th class="num" data-sort="avanceTotal" style="white-space:normal;min-width:94px">Avance ruta <span class="arrow">↕</span><small style="display:block;font-weight:600;text-transform:none;letter-spacing:0;font-size:9px;color:var(--ink-mute)">alumnos · prom.</small></th>
-            <th class="num" data-sort="avanceOblig" style="white-space:normal;min-width:94px">Avance oblig. <span class="arrow">↕</span><small style="display:block;font-weight:600;text-transform:none;letter-spacing:0;font-size:9px;color:var(--ink-mute)">alumnos · prom.</small></th>
             <th class="num" data-sort="docentesPLD">Docentes PLD <span class="arrow">↕</span></th>
             <th class="num" data-sort="rutasTotales">Rutas <span class="arrow">↕</span></th>
             <th class="num" data-sort="vitalidad">Vitalidad <span class="arrow">↕</span></th>
@@ -725,6 +720,115 @@
       .certif-sum td { font-size:12.5px; padding:7px 8px; border-bottom:1px solid var(--line); }
       .certif-sum tbody tr:last-child td { border-bottom:none; }
       .certif-sum tr.tot td { font-weight:700; background:#fafafa; }
+      .chev { display:inline-block; width:15px; color:var(--ink-mute); font-size:10px; }
+      .chev-none { display:inline-block; width:15px; }
+      tr.certif-esc { cursor:pointer; }
+      tr.certif-esc:hover { background:#fffbee; }
+      tr.certif-esc.open { background:#fffdf3; }
+      tr.certif-panel > td { background:#fcfcfa; padding:0; border-bottom:1px solid var(--line); }
+      .certif-panel-in { padding:6px 14px 14px 34px; }
+      .certif-nivel-title { font-family:"Barlow Condensed",sans-serif; font-weight:700; font-size:13px; text-transform:uppercase; letter-spacing:.03em; margin:8px 0 6px; }
+      .certif-nivel-empty { padding:10px 0; color:var(--ink-mute); font-size:12px; }
+      table.certif-niv { width:100%; max-width:640px; border-collapse:collapse; background:#fff; border:1px solid var(--line); border-radius:8px; overflow:hidden; }
+      table.certif-niv th { font-size:9px; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-mute); font-weight:700; text-align:left; padding:7px 10px; background:var(--bg); border-bottom:1px solid var(--line); }
+      table.certif-niv th.num, table.certif-niv td.num { text-align:right; }
+      table.certif-niv td { padding:7px 10px; font-size:12px; border-bottom:1px solid #eee; }
+      table.certif-niv tbody tr:last-child td { border-bottom:none; }
+      .niv-badge { display:inline-block; background:#111; color:#fff; font-family:"Barlow Condensed",sans-serif; font-weight:700; font-size:11px; letter-spacing:.04em; padding:2px 8px; border-radius:5px; }
+      .barwrap { display:inline-flex; align-items:center; gap:8px; justify-content:flex-end; }
+      .cbar { position:relative; width:90px; height:8px; border-radius:5px; background:#ececec; overflow:hidden; }
+      .cbar > i { position:absolute; left:0; top:0; bottom:0; background:var(--dh-yellow, #FFC72C); border-radius:5px; }
+      .cpct { font-weight:700; font-size:11.5px; min-width:44px; text-align:right; }
+      .certif-adv { margin-bottom:16px; }
+      .certif-adv-toggle { width:100%; text-align:left; background:#fff; border:1px solid var(--line); border-radius:10px; padding:11px 14px; font-family:"Barlow Condensed",sans-serif; font-weight:700; font-size:14px; text-transform:uppercase; letter-spacing:.03em; color:var(--ink); cursor:pointer; }
+      .certif-adv-toggle .chev { color:var(--ink-mute); font-size:11px; margin-right:6px; }
+      .certif-adv-body { margin-top:12px; }
+      .certif-adv-body.hidden { display:none; }
+      .certif-adv-title { font-family:"Barlow Condensed",sans-serif; font-weight:700; font-size:13px; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-mute); margin-bottom:8px; }
+      .certif-det { margin-top:16px; }
+      .certif-det-body { margin-top:12px; }
+      .certif-det-body.hidden { display:none; }
+      .certif-narr { background:#fff; border:1px solid var(--line); border-left:4px solid #FFC72C; border-radius:10px; padding:14px 16px; margin-bottom:16px; }
+      .certif-narr .narr-head { font-family:"Barlow Condensed",sans-serif; font-weight:700; font-size:14px; text-transform:uppercase; letter-spacing:.03em; margin-bottom:10px; }
+      .certif-narr .narr-pais { background:#111; color:#fff; font-size:11px; padding:2px 9px; border-radius:5px; margin-left:6px; }
+      .certif-narr .narr-cols { display:grid; grid-template-columns:1fr 1fr; gap:16px; align-items:start; }
+      .certif-narr .narr-cols.cols3 { grid-template-columns:1fr 1.15fr 1.15fr; }
+      @media (max-width:900px) { .certif-narr .narr-cols.cols3 { grid-template-columns:1fr; } }
+      .certif-narr ol { margin:0; padding:0; list-style:none; counter-reset:narr; }
+      .certif-narr .opp ol > li, .certif-narr .def ol > li { counter-increment:narr; }
+      .certif-narr .opp ol > li::before { content:counter(narr); position:absolute; left:0; top:5px; width:15px; height:15px; background:var(--amarillo); color:#fff; border-radius:50%; font-size:9px; font-weight:700; text-align:center; line-height:15px; }
+      .certif-narr .def ol > li::before { content:counter(narr); position:absolute; left:0; top:5px; width:15px; height:15px; background:var(--verde); color:#fff; border-radius:50%; font-size:9px; font-weight:700; text-align:center; line-height:15px; }
+      .certif-narr .def h5 { color:var(--verde); }
+      .certif-narr .narr-nd { color:var(--ink-mute); }
+      @media (max-width:640px) { .certif-narr .narr-cols { grid-template-columns:1fr; } }
+      .certif-narr h5 { font-family:"Barlow Condensed",sans-serif; font-weight:700; font-size:12.5px; text-transform:uppercase; letter-spacing:.04em; margin:0 0 6px; }
+      .certif-narr .log h5 { color:var(--verde); }
+      .certif-narr .opp h5 { color:var(--amarillo); }
+      .certif-narr ul { margin:0; padding:0; list-style:none; }
+      .certif-narr li { font-size:12px; line-height:1.45; padding:5px 0 5px 20px; position:relative; border-bottom:1px solid #f2f2f2; }
+      .certif-narr li:last-child { border-bottom:none; }
+      .certif-narr .log li::before { content:"\2713"; position:absolute; left:0; color:var(--verde); font-weight:700; }
+      .certif-narr .opp li::before { content:"\2192"; position:absolute; left:0; color:var(--amarillo); font-weight:700; }
+      .certif-narr .narr-accion { display:block; font-size:11px; color:var(--ink-mute); margin-top:3px; padding-left:2px; border-left:2px solid #eee; padding-left:8px; }
+      .certif-narr .narr-accion b { color:var(--verde); font-weight:700; }
+      .certif-sum tr.pais td { background:#fafafa; font-weight:700; }
+      .certif-sum tr.opm td:first-child { padding-left:20px; font-weight:600; }
+      .certif-sum tr.sis td:first-child { padding-left:36px; color:var(--ink-mute); font-size:11.5px; }
+      .certif-adv-head { display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; margin-bottom:2px; }
+      .certif-seg { display:inline-flex; border:1px solid var(--line); border-radius:6px; overflow:hidden; }
+      .certif-seg button { border:none; background:#fff; color:var(--ink-mute); font-size:11px; font-weight:700; padding:4px 10px; cursor:pointer; }
+      .certif-seg button.on { background:#111; color:#fff; }
+      .row2 { display:flex; align-items:center; gap:8px; font-size:11.5px; padding:4px 0; }
+      .row2 .lab { width:110px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+      .row2 .track { flex:1; height:14px; background:#f0f0f0; border-radius:4px; position:relative; overflow:hidden; }
+      .row2 .track > i { position:absolute; left:0; top:0; bottom:0; border-radius:4px; }
+      .row2 .meta { width:74px; text-align:right; color:var(--ink-mute); font-size:10px; }
+      .logros { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+      .tile { background:linear-gradient(160deg,#fffdf5,#fff); border:1px solid #f0e4bd; border-radius:9px; padding:11px 12px; }
+      .tile .big { font-family:"Barlow Condensed",sans-serif; font-weight:700; font-size:26px; line-height:1; color:var(--ink); }
+      .tile .big .u { font-size:15px; color:var(--amarillo); }
+      .tile .cap { font-size:9.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-mute); font-weight:700; margin-top:3px; }
+      .destacado { margin-top:10px; background:#fbfbf7; border:1px dashed #e2d9b8; border-radius:8px; padding:9px 11px; font-size:11.5px; line-height:1.5; }
+      .star { color:var(--amarillo); font-weight:700; }
+      .tiles3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
+      .cursos { margin-top:12px; border-top:1px solid var(--line); padding-top:11px; }
+      .cursos .top { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px; }
+      .cursos .top b { font-family:"Barlow Condensed",sans-serif; font-size:22px; }
+      .cursos .top .tot { font-size:13px; color:var(--ink-mute); font-weight:400; }
+      .cursos .top .lbl { font-size:10px; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-mute); font-weight:700; }
+      .curbar { margin:9px 0; }
+      .curbar-l { display:flex; justify-content:space-between; font-size:10.5px; margin-bottom:3px; }
+      .curbar-l .muted { color:var(--ink-mute); }
+      .curbar-trk { height:9px; background:#eee; border-radius:5px; overflow:hidden; }
+      .curbar-trk > i { display:block; height:100%; border-radius:5px; }
+      .ment { display:grid; grid-template-columns:repeat(auto-fill, minmax(210px, 1fr)); gap:10px; }
+      .mrow { display:flex; align-items:center; gap:12px; padding:8px 10px; border:1px solid var(--line); border-radius:9px; background:#fff; }
+      .mrow .name { font-weight:700; font-size:13px; }
+      .mrow .chips { margin-top:3px; display:flex; gap:6px; flex-wrap:wrap; }
+      .chip { font-size:10px; font-weight:700; padding:2px 8px; border-radius:50px; background:#f2f2f2; color:#555; }
+      .chip.g { background:rgba(39,160,90,.12); color:var(--verde); }
+      .nivlegend { display:flex; flex-wrap:wrap; gap:4px 12px; font-size:10px; color:var(--ink-mute); margin-top:8px; }
+      .nivlegend b { color:var(--ink); }
+      .serie { margin-bottom:12px; }
+      .serie:last-child { margin-bottom:0; }
+      .serie-h { font-family:"Barlow Condensed",sans-serif; font-weight:700; font-size:12px; text-transform:uppercase; letter-spacing:.03em; color:#333; margin-bottom:5px; padding-bottom:3px; border-bottom:1px solid #eee; }
+      .serie-brow { display:flex; align-items:center; gap:8px; font-size:11px; padding:3px 0; }
+      .serie-brow .sb-lab { width:52px; font-weight:700; color:#555; flex-shrink:0; }
+      .serie-brow .sb-track { flex:1; height:14px; background:#f0f0f0; border-radius:4px; overflow:hidden; }
+      .serie-brow .sb-track > i { display:block; height:100%; border-radius:4px; }
+      .serie-brow .sb-val { width:40px; text-align:right; font-weight:700; flex-shrink:0; }
+      .ruta-tag { font-weight:700; }
+      .ruta-combinada { margin-top:8px; font-size:12px; color:var(--ink); background:#fbfbf7; border:1px solid #eee; border-radius:6px; padding:6px 10px; }
+      .ruta-combinada b { font-size:13px; }
+      .certif-panel-grid { display:grid; grid-template-columns:1.5fr 1fr; gap:16px; align-items:start; }
+      @media (max-width:760px) { .certif-panel-grid { grid-template-columns:1fr; } }
+      .certif-cierre { background:#fff; border:1px solid var(--line); border-radius:8px; padding:12px; }
+      .cierre-coment { font-size:12px; line-height:1.5; color:var(--ink); background:#fbfbf7; border-left:3px solid #FFC72C; padding:8px 10px; border-radius:4px; margin-bottom:10px; }
+      .cierre-fechas { display:flex; flex-direction:column; gap:6px; }
+      .cierre-fecha { display:flex; justify-content:space-between; gap:10px; font-size:11.5px; border-bottom:1px solid #f0f0f0; padding-bottom:4px; }
+      .cierre-fecha:last-child { border-bottom:none; }
+      .cf-lbl { color:var(--ink-mute); font-weight:600; }
+      .cf-val { font-weight:700; font-variant-numeric:tabular-nums; }
     </style>
     <div id="certif-content"><div class="onb-loading">Cargando certificaciones otorgadas…</div></div>
   </section>
@@ -860,8 +964,6 @@ function transform(csvRows) {
     comunicacion: find('Comunicación', 'Comunicacion', 'Tipo de Comunicación'),
     rutasTotales: find('Rutas totales', 'Cantidad de rutas'),
     estudiantes:  find('Estudiantes (alumnos)', 'Estudiantes', 'Cantidad de Estudiantes'),
-    avanceTotal:  find('% progreso total (prom)', '% progreso total (prom.)', '% progreso total'),
-    avanceOblig:  find('% progreso obligatorio (prom)', '% progreso obligatorio (prom.)', '% progreso obligatorio'),
     docentes:     find('Docentes en PLD', 'Cantidad de Docentes en PLD'),
     mentor:       find('Mentor'),
     colegio:      find('Nombre en PG', 'Nombre en PG del Colegio'),
@@ -906,8 +1008,6 @@ function transform(csvRows) {
       tipoComunicacion: clean(r[cols.comunicacion]) || 'Sin dato',
       rutasTotales: parseNum(r[cols.rutasTotales]),
       estudiantes: parseNum(r[cols.estudiantes]),
-      avanceTotal: parsePct(r[cols.avanceTotal]),
-      avanceOblig: parsePct(r[cols.avanceOblig]),
       docentesPLD: parseNum(r[cols.docentes]),
       mentor: clean(r[cols.mentor]) || 'Sin asignar',
       colegio: clean(r[cols.colegio]) || 'Sin nombre',
@@ -1147,7 +1247,6 @@ function boot() {
   if (pill1) pill1.textContent = getRowsEnVista().length;
   setupTabs();
   loadOnboarding().catch(e => console.error('Onboarding:', e));
-  loadCertif().catch(e => console.error('Certificaciones:', e));
   loadAvance();
 }
 
@@ -1866,10 +1965,10 @@ function renderColegios(rowsArg) {
       r = (SEM_ORDER[a.semaforo] ?? 99) - (SEM_ORDER[b.semaforo] ?? 99);
     } else if (textCols.includes(col)) {
       r = String(a[col] || '').localeCompare(String(b[col] || ''), 'es');
-    } else if (col === 'vitalidad' || col === 'avanceTotal' || col === 'avanceOblig') {
+    } else if (col === 'vitalidad') {
       // null al final
-      const va = a[col] == null ? -1 : a[col];
-      const vb = b[col] == null ? -1 : b[col];
+      const va = a.vitalidad == null ? -1 : a.vitalidad;
+      const vb = b.vitalidad == null ? -1 : b.vitalidad;
       r = va - vb;
     } else {
       r = (a[col] || 0) - (b[col] || 0);
@@ -1887,17 +1986,14 @@ function renderColegios(rowsArg) {
 
   const tbody = document.querySelector('#tbl-colegios tbody');
   if (!arr.length) {
-    tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;color:var(--ink-mute);padding:24px">Sin colegios para los filtros seleccionados.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--ink-mute);padding:24px">Sin colegios para los filtros seleccionados.</td></tr>';
     return;
   }
 
-  const barNeutra = v => v == null ? '—'
-    : `<span class="vitalidad-cell"><span class="pct-bar" style="--w:${Math.min(100, Math.max(0, v))}%"></span>${v.toFixed(1)}%</span>`;
   tbody.innerHTML = arr.map(r => {
-    const vitCls = r.vitalidad == null ? '' : (r.vitalidad < 35 ? 'rojo' : r.vitalidad < 75 ? 'amarillo' : 'verde');
     const vit = r.vitalidad == null ? '—'
       : `<span class="vitalidad-cell">
-           <span class="pct-bar ${vitCls}" style="--w:${Math.min(100, Math.max(0, r.vitalidad))}%"></span>
+           <span class="vitalidad-bar" style="--w:${Math.min(100, Math.max(0, r.vitalidad))}%"></span>
            ${r.vitalidad.toFixed(1)}%
          </span>`;
     return `
@@ -1908,8 +2004,6 @@ function renderColegios(rowsArg) {
         <td>${escapeHtml(r.mentor)}</td>
         <td class="center"><span class="sem-dot ${r.semaforo}" title="${SEM_LABELS[r.semaforo]}"></span></td>
         <td class="num">${fmt(r.estudiantes)}</td>
-        <td class="num">${barNeutra(r.avanceTotal)}</td>
-        <td class="num">${barNeutra(r.avanceOblig)}</td>
         <td class="num">${fmt(r.docentesPLD)}</td>
         <td class="num">${fmt(r.rutasTotales)}</td>
         <td class="num">${vit}</td>
@@ -1960,7 +2054,10 @@ function switchTab(name) {
   const SEC = { impl: 'dashboard', onb: 'tab-onb', mentores: 'tab-mentores', certif: 'tab-certif' };
   Object.entries(SEC).forEach(([n, id]) => { const el = document.getElementById(id); if (el) el.classList.toggle('hidden', n !== name); });
   if (name === 'mentores' && typeof renderMentores === 'function') renderMentores();
-  if (name === 'certif' && typeof CERTIF_LOADED !== 'undefined' && CERTIF_LOADED) renderCertifBody();
+  if (name === 'certif') {
+    if (typeof CERTIF_LOADED !== 'undefined' && CERTIF_LOADED) renderCertifBody();
+    else if (typeof loadCertif === 'function') loadCertif().catch(e => console.error('Certificaciones:', e));
+  }
 }
 
 function kickEnVista(k) {
@@ -2231,11 +2328,24 @@ function renderOnbBody() {
    limita al scope de la vista (país/red del token) y a colegios Santillana en status.
    Requiere que esa pestaña esté publicada en la web. */
 const CSV_URL_CORE = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSPFRKVvwUioC_7rKCblIMz7Cu7qvQpQI8LJM982dThQkT_hLqaJgwU2Js8OhEZag4aJ3_5GCfvzSwd/pub?gid=1092641323&single=true&output=csv';
-const CSV_URL_CERTIF = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSPFRKVvwUioC_7rKCblIMz7Cu7qvQpQI8LJM982dThQkT_hLqaJgwU2Js8OhEZag4aJ3_5GCfvzSwd/pub?gid=1709700298&single=true&output=csv';
+const CSV_URL_CERTIF = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSPFRKVvwUioC_7rKCblIMz7Cu7qvQpQI8LJM982dThQkT_hLqaJgwU2Js8OhEZag4aJ3_5GCfvzSwd/pub?gid=578208540&single=true&output=csv';
+const CSV_URL_DETALLE = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSPFRKVvwUioC_7rKCblIMz7Cu7qvQpQI8LJM982dThQkT_hLqaJgwU2Js8OhEZag4aJ3_5GCfvzSwd/pub?gid=1460959156&single=true&output=csv';
+const DETALLE_CICLO = '2024/2025';
+let DETALLE_BY_COD = {};
+const CSV_URL_COMENTARIOS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSPFRKVvwUioC_7rKCblIMz7Cu7qvQpQI8LJM982dThQkT_hLqaJgwU2Js8OhEZag4aJ3_5GCfvzSwd/pub?gid=1436587876&single=true&output=csv';
+let COMENTARIOS_BY_COD = {};
+const CSV_URL_CLASES = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSQup14CCxdMLeQxKlwJCf2R_zqrD28B8Pq1D3VTAPdhZZK8K2XdXwyaB01KMVrfQGnFJ_8oCyOL3zU/pub?gid=1415454038&single=true&output=csv';
+let DETALLE_EMAIL_IDX = {};
+let NAME_TO_COD = {};
+let CLASES_BY_COD = {};
+const CSV_URL_NARRATIVA = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSPFRKVvwUioC_7rKCblIMz7Cu7qvQpQI8LJM982dThQkT_hLqaJgwU2Js8OhEZag4aJ3_5GCfvzSwd/pub?gid=185533443&single=true&output=csv';
+let NARRATIVA_BY_PAIS = {};
+const CERTIF_EXPANDED = new Set();
 let CERTIF_ALL = [];
 let CERTIF_LOADED = false;
 let CERTIF_SORT = { key: 'certif', dir: 'desc' };
 const codKeyC = c => String(c || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+const nombreKey = x => String(x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z0-9]/g, '');
 
 function certColIdx(H, ...names) {
   const HN = H.map(h => normKey(h));
@@ -2312,7 +2422,10 @@ function parseCore(text) {
   const iOp   = certColIdx(H, 'Operation mode', 'Operation Mode', 'Modo de operación', 'Modo de operacion', 'Op mode');
   const iRed  = certColIdx(H, 'Red');
   const iCal  = certColIdx(H, 'Calendario');
-  const iMent = certColIdx(H, 'Mentor');
+  const iMent25 = certColIdx(H, 'Mentor 2025', 'Mentor2025');
+  const iMent26 = certColIdx(H, 'Mentor 2026', 'Mentor2026');
+  const iMent = certColIdx(H, 'Mentor', 'Mentor asignado', 'Mentora');
+  const iNom = certColIdx(H, 'Nombre colegio', 'Nombre normalizado colegio', 'Organización en PG', 'Nombre en PG', 'Escuela', 'Colegio');
   const out = [];
   for (let r = hi + 1; r < arr.length; r++) {
     const row = arr[r]; if (!Array.isArray(row)) continue;
@@ -2320,36 +2433,426 @@ function parseCore(text) {
     if (!cod) continue;
     out.push({
       cod,
+      nombre: clean(iNom >= 0 ? row[iNom] : ''),
       pais: clean(iPais >= 0 ? row[iPais] : '') || 'Sin dato',
       opMode: clean(iOp >= 0 ? row[iOp] : '') || 'Sin dato',
       red: clean(iRed >= 0 ? row[iRed] : '') || 'Sin red',
       calendario: clean(iCal >= 0 ? row[iCal] : '') || 'Sin calendario',
-      mentor: clean(iMent >= 0 ? row[iMent] : '') || 'Sin asignar'
+      mentor: (clean(iMent26 >= 0 ? row[iMent26] : '') || clean(iMent25 >= 0 ? row[iMent25] : '') || clean(iMent >= 0 ? row[iMent] : '')) || 'Sin asignar'
     });
   }
   return out;
 }
 
+function nivOfTrack(t) {
+  const s = String(t || '').toUpperCase();
+  let m = s.match(/SENIOR\s+TRACKS?\s*(\d)/);
+  if (m) return 'ST' + m[1] + 'P';
+  if (/\bDMT\b|DMST|MINDSET/.test(s)) return 'DMST';
+  if (/\bDATA\b/.test(s)) return 'DATA';
+  if (/PYTHON|\bPYTH\b/.test(s)) return 'PYTH';
+  m = s.match(/KICK\s*OFF\s*(\d)/);
+  if (m) return 'KOF' + m[1];
+  m = s.match(/WEB\s*BASICS?\s*(\d)/);
+  if (m) return 'WEB' + m[1];
+  m = s.match(/\b(KOF[0-9]|WEB[0-9]|ST[0-9]P)\b/);
+  if (m) return m[1];
+  return '';
+}
+function parseNarrativa(text) {
+  const arr = (Papa.parse(text, { skipEmptyLines: true }).data) || [];
+  let hi = arr.findIndex(r => Array.isArray(r) && r.some(c => normKey(c) === 'pais'));
+  if (hi < 0) hi = 0;
+  const H = arr[hi];
+  const iP = certColIdx(H, 'País', 'Pais');
+  const iL = certColIdx(H, 'Logros', 'Logros destacados', 'Logro');
+  const iO = certColIdx(H, 'Oportunidades', 'Oportunidades de mejora', 'Oportunidad', 'Mejoras');
+  const iA = certColIdx(H, 'Qué definimos', 'Que definimos', 'Acciones', 'Acción', 'Accion', 'Definimos', 'Mejoras definidas');
+  const items = v => String(v || '').split(/[\n•]+/).map(x => x.replace(/^[\s\-–•]+/, '').trim()).filter(Boolean);
+  const map = {};
+  let lastPais = '';
+  for (let r = hi + 1; r < arr.length; r++) {
+    const row = arr[r]; if (!Array.isArray(row)) continue;
+    const p = clean(iP >= 0 ? row[iP] : ''); if (p) lastPais = p;
+    if (!lastPais) continue;
+    const m = map[normKey(lastPais)] || (map[normKey(lastPais)] = { pais: lastPais, logros: [], oportunidades: [] });
+    items(iL >= 0 ? row[iL] : '').forEach(x => m.logros.push(x));
+    const ops = items(iO >= 0 ? row[iO] : '');
+    if (ops.length) { const acc = clean(iA >= 0 ? row[iA] : ''); ops.forEach(x => m.oportunidades.push({ texto: x, accion: acc })); }
+  }
+  return map;
+}
+function buildClases(text) {
+  const arr = (Papa.parse(text, { skipEmptyLines: true }).data) || [];
+  let hi = arr.findIndex(r => Array.isArray(r) && r.some(c => { const k = normKey(c); return k === 'cod' || k === 'organization_name' || k === 'email'; }));
+  if (hi < 0) hi = 0;
+  const H = arr[hi];
+  const iCodDir = certColIdx(H, 'COD', 'Cod', 'Codigo', 'Código');
+  const iOrg = certColIdx(H, 'organization_name', 'organization name', 'organizacion', 'organización', 'escuela', 'colegio');
+  const iTrack = certColIdx(H, 'certificacion', 'certificación', 'track_pld', 'track pld', 'track', 'ruta');
+  const iCt = certColIdx(H, 'clases_totales', 'clases totales');
+  const iCf = certColIdx(H, 'clases_finalizadas', 'clases finalizadas');
+  const iFecha = certColIdx(H, 'fecha_de_inscripcion', 'fecha de inscripcion', 'fecha inscripcion');
+  const map = {};
+  for (let r = hi + 1; r < arr.length; r++) {
+    const row = arr[r]; if (!Array.isArray(row)) continue;
+    if (String(iFecha >= 0 ? row[iFecha] : '').trim().slice(0, 4) === '2026') continue;
+    let cod = codKeyC(iCodDir >= 0 ? row[iCodDir] : '');
+    if (!cod) cod = NAME_TO_COD[nombreKey(iOrg >= 0 ? row[iOrg] : '')];
+    if (!cod) continue;
+    const niv = nivOfTrack(iTrack >= 0 ? row[iTrack] : ''); if (!niv) continue;
+    const ct = parseInt(String(iCt >= 0 ? row[iCt] : '').replace(/[^0-9]/g, ''), 10);
+    const cf = parseInt(String(iCf >= 0 ? row[iCf] : '').replace(/[^0-9]/g, ''), 10);
+    const sch = map[cod] || (map[cod] = {});
+    const b = sch[niv] || (sch[niv] = { comp: 0, tot: 0 });
+    if (!isNaN(ct)) b.tot += ct;
+    if (!isNaN(cf)) b.comp += cf;
+  }
+  return map;
+}
+function buildDetalle(text) {
+  const arr = (Papa.parse(text, { skipEmptyLines: true }).data) || [];
+  let hi = arr.findIndex(r => Array.isArray(r) && r.some(c => { const k = normKey(c); return k === 'cod' || k === 'escuela'; }));
+  if (hi < 0) hi = 0;
+  const H = arr[hi];
+  const iCod = certColIdx(H, 'COD', 'Cod', 'Escuela', 'Colegio');
+  const iCiclo = certColIdx(H, 'Ciclo', 'Año/Ciclo', 'Año / Ciclo', 'Año', 'Ano', 'Ciclo escolar', 'Gestión', 'Gestion', 'Periodo', 'Período');
+  const iBase = certColIdx(H, 'Ruta Base', 'RutaBase', 'Ruta base');
+  const iEmail = certColIdx(H, 'Email', 'Correo', 'E-mail', 'Mail');
+  let iTot = certColIdx(H, 'Cursos completos / Cursos totales', 'Cursos completos/Cursos totales');
+  let iObl = certColIdx(H, 'Cursos obligatorios completos / Cursos obligatorios total', 'Cursos obligatorios completos / Cursos obligatorios totales');
+  if (iTot < 0) iTot = H.findIndex(h => /cursos.*completos.*cursos.*total/i.test(String(h)) && !/obligatori/i.test(String(h)));
+  if (iObl < 0) iObl = H.findIndex(h => /obligatori.*completos/i.test(String(h)));
+  const frac = v => { const m = String(v || '').match(/(-?\d+)\s*\/\s*(-?\d+)/); return m ? [parseInt(m[1], 10), parseInt(m[2], 10)] : [null, null]; };
+  const nivOf = rb => { const m = String(rb || '').trim().match(/^([A-Za-z0-9]+)/); return m ? m[1].toUpperCase() : ''; };
+  const map = {};
+  DETALLE_EMAIL_IDX = {};
+  for (let r = hi + 1; r < arr.length; r++) {
+    const row = arr[r]; if (!Array.isArray(row)) continue;
+    const cod = clean(iCod >= 0 ? row[iCod] : ''); if (!cod) continue;
+    const niv = nivOf(iBase >= 0 ? row[iBase] : ''); if (!niv) continue;
+    if (/^R/i.test(niv) || /^MBH/i.test(niv)) continue; // excluir ramp-ups y MBH (en desuso)
+    const ciclo = (iCiclo >= 0 ? clean(row[iCiclo]) : '') || DETALLE_CICLO;
+    if (String(ciclo).replace(/[^0-9]/g, '') === '2026') continue; // excluir 2026
+    const email = clean(iEmail >= 0 ? row[iEmail] : '').toLowerCase();
+    const [cc, ct] = frac(iTot >= 0 ? row[iTot] : '');
+    const [oc, ot] = frac(iObl >= 0 ? row[iObl] : '');
+    const k = codKeyC(cod);
+    const school = map[k] || (map[k] = { ciclos: {} });
+    const cy = school.ciclos[ciclo] || (school.ciclos[ciclo] = { ciclo: ciclo, niveles: {} });
+    const n = cy.niveles[niv] || (cy.niveles[niv] = { nivel: niv, emails: new Set(), certEmails: new Set(), comp: 0, tot: 0, obligComp: 0, obligTot: 0, clasesComp: 0, clasesTot: 0 });
+    n.emails.add(email || ('r' + r));
+    if (email) DETALLE_EMAIL_IDX[email + '|' + niv] = { cod: k, ciclo };
+    if (cc != null) n.comp += cc; if (ct != null) n.tot += ct;
+    if (oc != null) n.obligComp += oc; if (ot != null) n.obligTot += ot;
+    const senior = /^ST\d/i.test(niv) || niv === 'DATA' || niv === 'DMST' || niv === 'PYTH';
+    const certifica = senior ? (cc != null && cc >= 1) : (ot != null && ot > 0 && oc != null && oc >= ot);
+    if (certifica) n.certEmails.add(email || ('r' + r));
+  }
+  return map;
+}
+
+const NIVEL_ORDER = ['KOF1', 'KOF2', 'KOF3', 'WEB1', 'WEB2', 'WEB3', 'ST1P', 'ST2P', 'ST3P', 'DATA', 'DMST', 'PYTH'];
+const NIVEL_SERIES = [
+  { name: 'Kick-off', niveles: ['KOF1', 'KOF2', 'KOF3'] },
+  { name: 'Web Basics', niveles: ['WEB1', 'WEB2', 'WEB3'] },
+  { name: 'Senior Tracks Mixtos con Python', niveles: ['ST1P', 'ST2P', 'ST3P'] },
+  { name: 'Senior Tracks Mixtos con JavaScript', niveles: ['ST1J', 'ST2J', 'ST3J'] },
+  { name: 'Senior Tracks Puros', niveles: ['DMST', 'DATA', 'PYTH', 'AVJS'] }
+];
+
+function detalleFor(cod, ano) {
+  const d = DETALLE_BY_COD[codKeyC(cod)];
+  if (!d || !d.ciclos) return null;
+  const keys = Object.keys(d.ciclos);
+  if (!keys.length) return null;
+  const a = String(ano || '').replace(/[^0-9]/g, '');
+  let hit = null;
+  if (a) hit = keys.find(k => { const kk = String(k).replace(/[^0-9]/g, ''); return kk && (kk === a || kk.includes(a) || a.includes(kk)); });
+  if (!hit) hit = keys.slice().sort((x, y) => String(x).replace(/[^0-9]/g, '').localeCompare(String(y).replace(/[^0-9]/g, ''))).pop(); // sin match de ciclo: usar el más reciente
+  return hit ? d.ciclos[hit] : null;
+}
+
+function avanceRuta(cod, ano) {
+  const cy = detalleFor(cod, ano);
+  if (!cy) return null;
+  let comp = 0, tot = 0;
+  Object.values(cy.niveles).forEach(n => { comp += n.comp; tot += n.tot; });
+  return tot > 0 ? (comp / tot * 100) : null;
+}
+
+function parseComentarios(text) {
+  const arr = (Papa.parse(text, { skipEmptyLines: true }).data) || [];
+  let hi = arr.findIndex(r => Array.isArray(r) && r.some(c => { const k = normKey(c); return k === 'cod' || k === 'escuela'; }));
+  if (hi < 0) hi = 0;
+  const H = arr[hi];
+  const iCod = certColIdx(H, 'COD', 'Cod', 'Escuela', 'Colegio');
+  let iCom = certColIdx(H, 'Comentario', 'Comentarios', 'Comentario cierre', 'Comentario del mentor', 'Observaciones');
+  if (iCom < 0) iCom = H.findIndex(h => /coment|observ/i.test(String(h)));
+  const fechaCols = [];
+  H.forEach((h, idx) => { if (idx !== iCod && idx !== iCom && /fecha/i.test(String(h))) fechaCols.push({ idx, label: clean(h) }); });
+  const map = {};
+  for (let r = hi + 1; r < arr.length; r++) {
+    const row = arr[r]; if (!Array.isArray(row)) continue;
+    const cod = clean(iCod >= 0 ? row[iCod] : ''); if (!cod) continue;
+    const comentario = clean(iCom >= 0 ? row[iCom] : '');
+    const fechas = fechaCols.map(fc => ({ label: fc.label, value: clean(row[fc.idx]) })).filter(x => x.value);
+    if (!comentario && !fechas.length) continue;
+    map[codKeyC(cod)] = { comentario, fechas };
+  }
+  return map;
+}
+
+function certifNivelPanel(cod, ano) {
+  const cy = detalleFor(cod, ano);
+  let nivHtml;
+  if (!cy) nivHtml = '<div class="certif-nivel-empty">Sin detalle de avance para este ciclo.</div>';
+  else {
+    const nivs = Object.values(cy.niveles).sort((a, b) => {
+      const ia = NIVEL_ORDER.indexOf(a.nivel), ib = NIVEL_ORDER.indexOf(b.nivel);
+      return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || a.nivel.localeCompare(b.nivel);
+    });
+    const pct = (n, t) => t > 0 ? (n / t * 100) : null;
+    const bar = v => {
+      if (v == null) return '<span class="sin-plat">\u2014</span>';
+      const w = Math.max(0, Math.min(100, v));
+      return '<div class="barwrap"><span class="cbar"><i style="width:' + w.toFixed(1) + '%"></i></span><span class="cpct">' + (Math.round(v * 10) / 10).toString().replace('.', ',') + '%</span></div>';
+    };
+    const certTag = v => { if (v == null) return '<span class="sin-plat">\u2014</span>'; const cl = v > 50 ? 'cert-v' : v < 30 ? 'cert-r' : 'cert-a'; return '<span class="cert-tag ' + cl + '">' + (Math.round(v * 10) / 10).toString().replace('.', ',') + '%</span>'; };
+    const clSch = CLASES_BY_COD[codKeyC(cod)] || {};
+    const body = nivs.map(n => {
+      const cl = clSch[n.nivel];
+      return '<tr><td><span class="niv-badge">' + escapeHtml(n.nivel) + '</span></td>' +
+      '<td class="num">' + n.emails.size.toLocaleString('es-AR') + '</td>' +
+      '<td class="num">' + certTag(n.emails.size ? (n.certEmails.size / n.emails.size * 100) : null) + '</td>' +
+      '<td class="num">' + bar(pct(n.obligComp, n.obligTot)) + '</td>' +
+      '<td class="num">' + bar(pct(n.comp - n.obligComp, n.tot - n.obligTot)) + '</td>' +
+      '<td class="num">' + bar(cl ? pct(cl.comp, cl.tot) : null) + '</td></tr>';
+    }).join('');
+    nivHtml = '<div class="certif-nivel-title">Avance por nivel \u00b7 ciclo ' + escapeHtml(cy.ciclo || DETALLE_CICLO) + '</div>' +
+      '<table class="certif-niv"><thead><tr><th>Nivel</th><th class="num">Estudiantes</th><th class="num">Tasa cert.</th><th class="num">Avance cursos oblig.</th><th class="num">Avance cursos no oblig.</th><th class="num">Avance clases (total)</th></tr></thead><tbody>' + body + '</tbody></table>';
+  }
+  const com = COMENTARIOS_BY_COD[codKeyC(cod)];
+  let cierreHtml = '';
+  if (com) {
+    const fechas = (com.fechas || []).map(fx => '<div class="cierre-fecha"><span class="cf-lbl">' + escapeHtml(fx.label) + '</span><span class="cf-val">' + escapeHtml(fx.value) + '</span></div>').join('');
+    cierreHtml = '<div class="certif-cierre"><div class="certif-nivel-title">Cierre del mentor</div>' +
+      (com.comentario ? '<div class="cierre-coment">' + escapeHtml(com.comentario) + '</div>' : '') +
+      (fechas ? '<div class="cierre-fechas">' + fechas + '</div>' : '') +
+      '</div>';
+  }
+  if (cierreHtml) return '<div class="certif-panel-grid"><div class="certif-panel-niv">' + nivHtml + '</div>' + cierreHtml + '</div>';
+  return nivHtml;
+}
+let CERTIF_NIVEL_METRIC = 'cert';
+let CERTIF_TOP_MODE = 'top';
+let CERTIF_LAST_ROWS = null;
+let CERTIF_ROWSCHART = null;
+
+function aggregateDetalle(rows) {
+  const seen = new Set();
+  const seenCl = new Set();
+  const byNivel = {};
+  rows.forEach(c => {
+    const cy = detalleFor(c.cod, c.ano);
+    if (!cy) return;
+    const dk = codKeyC(c.cod) + '@' + (cy.ciclo || '');
+    if (seen.has(dk)) return;
+    seen.add(dk);
+    Object.values(cy.niveles).forEach(n => {
+      const g = byNivel[n.nivel] || (byNivel[n.nivel] = { nivel: n.nivel, comp: 0, tot: 0, obligComp: 0, obligTot: 0, clasesComp: 0, clasesTot: 0, students: 0, cert: 0 });
+      g.comp += n.comp; g.tot += n.tot; g.obligComp += n.obligComp; g.obligTot += n.obligTot;
+      const clK = codKeyC(c.cod) + '|' + n.nivel;
+      if (!seenCl.has(clK)) { seenCl.add(clK); const cl = (CLASES_BY_COD[codKeyC(c.cod)] || {})[n.nivel]; if (cl) { g.clasesComp += cl.comp; g.clasesTot += cl.tot; } }
+      g.students += n.emails.size; g.cert += n.certEmails.size;
+    });
+  });
+  return byNivel;
+}
+
+function nivelNombre(niv) {
+  const N = { DATA: 'Senior Track de Data Analytics', DMST: 'Senior Track de Mindset Digital', PYTH: 'Senior Track avanzado de Python', ST1P: 'Senior Tracks Mixto con Python 1', ST2P: 'Senior Tracks Mixto con Python 2', ST3P: 'Senior Tracks Mixto con Python 3' };
+  if (N[niv]) return N[niv];
+  const m = String(niv).match(/^(KOF|WEB)(\d+)/i);
+  if (m) return (m[1].toUpperCase() === 'KOF' ? 'Kick-off' : 'Web Basics') + ' ' + m[2];
+  return niv;
+}
+
+function svgBars(items, semaforo) {
+  const W = 460, H = 168, base = 118, top = 22, n = items.length || 1;
+  const slot = (W - 16) / n, bw = Math.min(34, slot * 0.55);
+  const col = v => {
+    if (!semaforo) return '#e9c65a';
+    return v == null ? '#ddd' : v > 50 ? '#27a05a' : v < 30 ? '#c0392b' : '#d4a017';
+  };
+  let s = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" xmlns="http://www.w3.org/2000/svg" font-family="Barlow"><line x1="8" y1="' + base + '" x2="' + (W - 8) + '" y2="' + base + '" stroke="#e4e4e4"/>';
+  items.forEach((it, i) => {
+    const cx = 8 + slot * i + slot / 2;
+    const v = it.value;
+    const h = v == null ? 0 : Math.max(1, (v / 100) * (base - top));
+    const y = base - h;
+    s += '<g><title>' + escapeHtml(it.title || it.label) + '</title>';
+    s += '<rect x="' + (cx - bw / 2).toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + bw + '" height="' + h.toFixed(1) + '" fill="' + col(v) + '" rx="2"/>';
+    if (v != null) s += '<text x="' + cx.toFixed(1) + '" y="' + (y - 5).toFixed(1) + '" font-size="10" fill="#1a1a1a" font-weight="700" text-anchor="middle">' + Math.round(v) + '%</text>';
+    s += '<text x="' + cx.toFixed(1) + '" y="' + (base + 13) + '" font-size="9.5" fill="#888" text-anchor="middle">' + escapeHtml(it.label) + '</text>';
+    if (it.sub) s += '<text x="' + cx.toFixed(1) + '" y="' + (base + 24) + '" font-size="8.5" fill="#aaa" text-anchor="middle">' + escapeHtml(it.sub) + '</text>';
+    s += '</g>';
+  });
+  return s + '</svg>';
+}
+
+function renderCertifAdvanced(rows) {
+  CERTIF_LAST_ROWS = rows;
+  const byNivel = aggregateDetalle(rows);
+  let clC = 0, clT = 0; Object.values(byNivel).forEach(g => { clC += g.clasesComp || 0; clT += g.clasesTot || 0; });
+  const claseAvg = clT > 0 ? (clC / clT * 100) : null;
+  const showClase = claseAvg != null && claseAvg > 62;
+  const clWrap = document.getElementById('cstat-clases-wrap'), clEl = document.getElementById('cstat-clases');
+  if (clWrap) clWrap.style.display = showClase ? '' : 'none';
+  if (clEl && showClase) { clEl.textContent = (Math.round(claseAvg * 10) / 10).toString().replace('.', ',') + '%'; clEl.style.color = 'var(--verde)'; }
+  let ac = 0, at = 0; Object.values(byNivel).forEach(g => { ac += g.comp; at += g.tot; });
+  const avg = at > 0 ? (ac / at * 100) : null;
+  const avEl = document.getElementById('cstat-avance');
+  if (avEl) avEl.textContent = avg == null ? '—' : (Math.round(avg * 10) / 10).toString().replace('.', ',') + '%';
+
+  const nivChart = document.getElementById('certif-nivel-chart');
+  if (nivChart) {
+    const isC = CERTIF_NIVEL_METRIC !== 'avance';
+    const valOf = g => isC ? (g.students > 0 ? (g.cert / g.students * 100) : null) : (g.clasesTot > 0 ? (g.clasesComp / g.clasesTot * 100) : null);
+    const cntOf = g => isC ? (g.cert.toLocaleString('es-AR') + '/' + g.students.toLocaleString('es-AR') + ' cert.') : (g.clasesComp.toLocaleString('es-AR') + '/' + g.clasesTot.toLocaleString('es-AR') + ' clases');
+    const barCol = v => v == null ? '#ddd' : v > 50 ? '#27a05a' : v < 30 ? '#c0392b' : '#d4a017';
+    const brow = (label, g) => {
+      const v = valOf(g), w = v == null ? 0 : Math.max(0, Math.min(100, v));
+      return '<div class="serie-brow" title="' + escapeHtml(nivelNombre(label) + ' · ' + cntOf(g)) + '"><span class="sb-lab">' + escapeHtml(label) + '</span><span class="sb-track"><i style="width:' + w.toFixed(0) + '%;background:' + barCol(v) + '"></i></span><span class="sb-val">' + (v == null ? '—' : Math.round(v) + '%') + '</span></div>';
+    };
+    const enSerie = new Set(); NIVEL_SERIES.forEach(sr => sr.niveles.forEach(n => enSerie.add(n)));
+    const otrosNiv = Object.keys(byNivel).filter(n => !enSerie.has(n)).sort();
+    let html = '';
+    NIVEL_SERIES.forEach(sr => {
+      const nivs = sr.niveles.filter(n => byNivel[n]);
+      if (!nivs.length) return;
+      html += '<div class="serie"><div class="serie-h">' + escapeHtml(sr.name) + '</div>' + nivs.map(n => brow(n, byNivel[n])).join('') + '</div>';
+    });
+    if (otrosNiv.length) html += '<div class="serie"><div class="serie-h">Otros</div>' + otrosNiv.map(n => brow(n, byNivel[n])).join('') + '</div>';
+    nivChart.innerHTML = html || '<div class="certif-nivel-empty">Sin datos de detalle para el scope.</div>';
+  }
+
+  const mEl = document.getElementById('certif-mentor-chart');
+  if (mEl) {
+    const byMent = {};
+    rows.forEach(c => {
+      if (!c.mentor || c.mentor === 'Sin asignar') return;
+      const m = byMent[c.mentor] || (byMent[c.mentor] = { mentor: c.mentor, cert: 0, ins: 0, cods: new Set() });
+      if (c.certificados != null) { m.cert += c.certificados; m.ins += (c.inscripciones || 0); }
+      m.cods.add(codKeyC(c.cod));
+    });
+    const arr = Object.values(byMent).map(m => ({ mentor: m.mentor, tasa: m.ins > 0 ? (m.cert / m.ins * 100) : null, n: m.cods.size, cert: m.cert }))
+      .filter(m => m.tasa != null).sort((a, b) => b.tasa - a.tasa);
+    if (!arr.length) mEl.innerHTML = '<div class="certif-nivel-empty">Sin datos de mentor para el scope.</div>';
+    else mEl.innerHTML = '<div class="ment">' + arr.map(m => {
+      const stroke = m.tasa > 50 ? '#27a05a' : m.tasa < 30 ? '#c0392b' : '#d4a017';
+      const off = (125.66 * (1 - Math.max(0, Math.min(100, m.tasa)) / 100)).toFixed(1);
+      return '<div class="mrow">' +
+        '<svg width="52" height="52" viewBox="0 0 52 52"><circle cx="26" cy="26" r="20" fill="none" stroke="#eee" stroke-width="7"/><circle cx="26" cy="26" r="20" fill="none" stroke="' + stroke + '" stroke-width="7" stroke-dasharray="125.66" stroke-dashoffset="' + off + '" stroke-linecap="round" transform="rotate(-90 26 26)"/><text x="26" y="30" font-size="13" font-weight="700" text-anchor="middle" font-family="Barlow">' + Math.round(m.tasa) + '%</text></svg>' +
+        '<div><div class="name">' + escapeHtml(m.mentor) + '</div><div class="chips"><span class="chip g">' + m.n + ' colegios</span><span class="chip">' + m.cert.toLocaleString('es-AR') + ' certif.</span></div></div>' +
+        '</div>';
+    }).join('') + '</div>';
+  }
+
+  const tEl = document.getElementById('certif-top-table');
+  if (tEl) {
+    const withRate = rows.filter(c => c.tcNum != null);
+    withRate.sort((a, b) => CERTIF_TOP_MODE === 'bottom' ? a.tcNum - b.tcNum : b.tcNum - a.tcNum);
+    const top = withRate.slice(0, 5);
+    if (!top.length) tEl.innerHTML = '<div class="certif-nivel-empty">Sin colegios con tasa para el scope.</div>';
+    else tEl.innerHTML = '<table class="certif-niv"><thead><tr><th>#</th><th>Colegio</th><th class="num">Tasa cert.</th><th>Mentor</th></tr></thead><tbody>' +
+      top.map((c, i) => {
+        const v = c.tcNum, cl = v > 50 ? 'cert-v' : v < 30 ? 'cert-r' : 'cert-a';
+        return '<tr><td>' + (i + 1) + '</td><td><span class="cert-cod">' + escapeHtml(c.cod) + '</span> ' + escapeHtml(c.escuela) + '</td>' +
+          '<td class="num"><span class="cert-tag ' + cl + '">' + escapeHtml(certPctFmt(c.tcRaw)) + '</span></td>' +
+          '<td style="color:var(--ink-mute)">' + escapeHtml(c.mentor || 'Sin asignar') + '</td></tr>';
+      }).join('') + '</tbody></table>';
+  }
+
+  const lEl = document.getElementById('certif-logros');
+  if (lEl) {
+    const nfmt = v => v.toLocaleString('es-AR');
+    const totalCert = rows.reduce((s, c) => s + (c.certificados || 0), 0);
+    let cursos = 0; Object.values(byNivel).forEach(g => { cursos += g.comp; });
+    const codsAll = new Set(rows.map(c => codKeyC(c.cod)));
+    const cods50 = new Set(rows.filter(c => c.tcNum != null && c.tcNum > 50).map(c => codKeyC(c.cod)));
+    const estud = rows.reduce((s, c) => s + (c.estudiantes || 0), 0);
+    let best = null;
+    Object.values(byNivel).forEach(g => { const rr = g.students > 0 ? (g.cert / g.students * 100) : null; if (rr != null && (!best || rr > best.r)) best = { niv: g.nivel, r: rr }; });
+    const crec = certifCrecimiento(CERTIF_ROWSCHART || rows);
+    let tComp = 0, tTot = 0, oComp = 0, oTot = 0;
+    Object.values(byNivel).forEach(g => { tComp += g.comp; tTot += g.tot; oComp += g.obligComp; oTot += g.obligTot; });
+    const pComp = Math.max(0, tComp - oComp), pTot = Math.max(0, tTot - oTot);
+    const pctOf = (a, b) => b > 0 ? Math.round(a / b * 100) : 0;
+    const tiles =
+      '<div class="tile"><div class="big">' + nfmt(totalCert) + '</div><div class="cap">Certificaciones otorgadas</div></div>' +
+      '<div class="tile"><div class="big">' + nfmt(estud) + '</div><div class="cap">Estudiantes que desarrollaron habilidades digitales</div></div>' +
+      '<div class="tile"><div class="big">' + nfmt(cods50.size) + '<span class="u"> / ' + nfmt(codsAll.size) + '</span></div><div class="cap">Colegios con +50% cert.</div></div>';
+    const cursosBlock = '<div class="cursos"><div class="top"><span class="lbl">Cursos aprobados</span><b>' + nfmt(tComp) + ' <span class="tot">/ ' + nfmt(tTot) + '</span></b></div>' +
+      '<div class="curbar"><div class="curbar-l"><span>Obligatorios</span><span class="muted">' + nfmt(oComp) + ' / ' + nfmt(oTot) + ' \u00b7 ' + pctOf(oComp, oTot) + '%</span></div><div class="curbar-trk"><i style="width:' + pctOf(oComp, oTot) + '%;background:var(--verde)"></i></div></div>' +
+      '<div class="curbar"><div class="curbar-l"><span>Optativos</span><span class="muted">' + nfmt(pComp) + ' / ' + nfmt(pTot) + ' \u00b7 ' + pctOf(pComp, pTot) + '%</span></div><div class="curbar-trk"><i style="width:' + pctOf(pComp, pTot) + '%;background:var(--amarillo)"></i></div></div>' + (showClase ? '<div class="curbar"><div class="curbar-l"><span>Avance en clases (promedio)</span><span class="muted">' + (Math.round(claseAvg * 10) / 10).toString().replace('.', ',') + '%</span></div><div class="curbar-trk"><i style="width:' + Math.min(100, claseAvg).toFixed(0) + '%;background:var(--verde)"></i></div></div>' : '') + '</div>';
+    const dest = [];
+    if (best) dest.push('<span class="star">\u2605</span> <b>Nivel destacado:</b> ' + escapeHtml(best.niv) + ' con ' + Math.round(best.r) + '% de certificación');
+    if (crec) dest.push('<span class="star">\u2605</span> <b>' + (crec.pct >= 0 ? '+' : '') + (Math.round(crec.pct * 10) / 10).toString().replace('.', ',') + '%</b> de certificados vs. ciclo ' + escapeHtml(crec.prev) + ' (' + crec.n + ' colegios comparables)');
+    lEl.innerHTML = '<div class="tiles3">' + tiles + '</div>' + cursosBlock + (dest.length ? '<div class="destacado">' + dest.join(' &nbsp;\u00b7&nbsp; ') + '</div>' : '');
+  }
+}
+
+function certifCrecimiento(rowsChart) {
+  const byCicloCod = {};
+  rowsChart.forEach(c => {
+    if (c.certificados == null) return;
+    const cy = String(c.ano || ''); if (!cy) return;
+    const bag = byCicloCod[cy] || (byCicloCod[cy] = {});
+    const k = codKeyC(c.cod);
+    bag[k] = (bag[k] || 0) + c.certificados;
+  });
+  const ciclos = Object.keys(byCicloCod).sort((a, b) => String(a).replace(/[^0-9]/g, '').localeCompare(String(b).replace(/[^0-9]/g, '')));
+  if (ciclos.length < 2) return null;
+  const cur = ciclos[ciclos.length - 1], prev = ciclos[ciclos.length - 2];
+  const curM = byCicloCod[cur], prevM = byCicloCod[prev];
+  let curSum = 0, prevSum = 0, n = 0;
+  Object.keys(curM).forEach(k => { if (k in prevM) { curSum += curM[k]; prevSum += prevM[k]; n++; } });
+  if (n === 0 || prevSum === 0) return null;
+  return { pct: (curSum - prevSum) / prevSum * 100, cur, prev, n };
+}
 async function loadCertif() {
   const cont = document.getElementById('certif-content');
   try {
-    const [certifRes, coreRes] = await Promise.all([fetch(CSV_URL_CERTIF), fetch(CSV_URL_CORE)]);
+    const [certifRes, coreRes, detRes, comRes, clasesRes, narrRes] = await Promise.all([fetch(CSV_URL_CERTIF), fetch(CSV_URL_CORE), fetch(CSV_URL_DETALLE), fetch(CSV_URL_COMENTARIOS), fetch(CSV_URL_CLASES), fetch(CSV_URL_NARRATIVA)]);
     if (!certifRes.ok) throw new Error('HTTP ' + certifRes.status);
     const rows = parseCertif(await certifRes.text());
-    // Cruce contra Core 2026 (fuente completa de opmode/red/país/calendario/mentor); RAW como respaldo
+    // Core 2026 primero (para opmode/red/mentor y para resolver COD por nombre)
+    const coreArr = coreRes.ok ? parseCore(await coreRes.text()) : [];
     const coreByCod = {};
-    if (coreRes.ok) parseCore(await coreRes.text()).forEach(s => { if (s.cod) coreByCod[codKeyC(s.cod)] = s; });
+    coreArr.forEach(s => { if (s.cod) coreByCod[codKeyC(s.cod)] = s; });
+    // Índice nombre de colegio → COD (de Certificaciones y de Core), para cruzar la hoja de clases
+    NAME_TO_COD = {};
+    rows.forEach(c => { const nk = nombreKey(c.escuela); if (nk && c.cod) NAME_TO_COD[nk] = codKeyC(c.cod); });
+    coreArr.forEach(s => { const nk = nombreKey(s.nombre); if (nk && s.cod) NAME_TO_COD[nk] = codKeyC(s.cod); });
+    // Detalle por cursos + merge de avance por clases (cruza organization_name → COD)
+    DETALLE_BY_COD = detRes.ok ? buildDetalle(await detRes.text()) : {};
+    try { CLASES_BY_COD = clasesRes.ok ? buildClases(await clasesRes.text()) : {}; } catch (e) { console.error('Clases:', e); CLASES_BY_COD = {}; }
+    if (!clasesRes.ok) console.warn('Clases: no se pudo cargar el CSV (HTTP', clasesRes.status, ')');
+    COMENTARIOS_BY_COD = comRes.ok ? parseComentarios(await comRes.text()) : {};
+    NARRATIVA_BY_PAIS = narrRes.ok ? parseNarrativa(await narrRes.text()) : {};
     const rawByCod = {};
     (RAW ? (RAW.rows || []).concat(RAW.rowsNoActivos || []) : []).forEach(s => { if (s.cod) rawByCod[codKeyC(s.cod)] = s; });
     rows.forEach(c => {
       const k = codKeyC(c.cod);
-      const m = coreByCod[k] || rawByCod[k];
-      c.opMode     = m ? m.opMode     : 'Sin dato';
-      c.red        = m ? m.red        : 'Sin red';
-      c.calendario = m ? m.calendario : 'Sin calendario';
-      c.mentor     = m ? m.mentor     : 'Sin asignar';
+      const mc = coreByCod[k], mr = rawByCod[k], m = mc || mr;
+      const pick = (fld, dflt) => (mc && mc[fld] && mc[fld] !== dflt) ? mc[fld] : (mr && mr[fld] && mr[fld] !== dflt) ? mr[fld] : dflt;
+      c.opMode     = pick('opMode', 'Sin dato');
+      c.red        = pick('red', 'Sin red');
+      c.calendario = pick('calendario', 'Sin calendario');
+      c.mentor     = pick('mentor', 'Sin asignar');
       c.enStatus   = !!m;
-      if (m && (!c.pais || c.pais === 'Sin dato')) c.pais = m.pais;
+      if (m && (!c.pais || c.pais === 'Sin dato')) c.pais = pick('pais', c.pais || 'Sin dato');
     });
     // Scope de la vista: solo colegios Santillana en status (RAW ya está filtrado a Santillana)
     // y dentro del país/red del token.
@@ -2394,13 +2897,31 @@ function buildCertifShell() {
         '<div class="stat"><div class="num" id="cstat-est">—</div><div class="lbl">Estudiantes</div></div>' +
         '<div class="stat"><div class="num" id="cstat-cert">—</div><div class="lbl">Certificados</div></div>' +
         '<div class="stat"><div class="num" id="cstat-tasa">—</div><div class="lbl">Tasa cert. ponderada</div><div class="stat-note">Σ certif. / Σ inscrip.</div></div>' +
+        '<div class="stat" id="cstat-clases-wrap" style="display:none"><div class="num" id="cstat-clases">—</div><div class="lbl">Avance clases prom.</div><div class="stat-note">Σ clases fin. / Σ clases</div></div>' +
       '</div>' +
     '</section>' +
+    '<div id="certif-narrativa" style="display:none"></div>' +
     '<div class="certif-cards">' +
       '<div class="certif-card"><h4>Resumen por país</h4><div class="csub">Respeta los filtros activos, incluido Ciclo</div><div id="certif-summary"></div></div>' +
-      '<div class="certif-card"><h4>Certificados por ciclo</h4><div class="csub">Todos los ciclos · ignora el filtro de Ciclo</div><div class="certif-chartwrap"><canvas id="certif-chart"></canvas></div><div class="certif-note" id="certif-chart-note"></div></div>' +
+      '<div class="certif-card"><h4>Impacto del programa</h4><div class="csub">Impacto del scope filtrado</div><div id="certif-logros"></div></div>' +
     '</div>' +
-    '<div id="certif-body"></div>';
+    '<div class="certif-adv">' +
+      '<div class="certif-adv-title">Analítica</div>' +
+      '<div class="certif-adv-body" id="cadv-body">' +
+        '<div class="certif-cards">' +
+          '<div class="certif-card"><div class="certif-adv-head"><h4>Comparación por nivel</h4><div class="certif-seg" id="cadv-nivel-seg"><button type="button" data-m="cert" class="on">Tasa cert.</button><button type="button" data-m="avance">Avance</button></div></div><div class="csub">Pasá el mouse por cada barra para ver el detalle · sin ramp-ups ni MBH</div><div id="certif-nivel-chart"></div></div>' +
+          '<div class="certif-card"><h4>Mentor · tasa cert. y nº de colegios</h4><div class="csub">Barra = tasa cert. ponderada de sus colegios · (n) = colegios</div><div id="certif-mentor-chart"></div></div>' +
+        '</div>' +
+        '<div class="certif-cards">' +
+          '<div class="certif-card"><div class="certif-adv-head"><h4>Ranking de colegios por tasa de certificación</h4><div class="certif-seg" id="cadv-top-seg"><button type="button" data-t="top" class="on">Top 5</button><button type="button" data-t="bottom">Fondo 5</button></div></div><div class="csub">Con mentor asignado · respeta los filtros</div><div id="certif-top-table"></div></div>' +
+          '<div class="certif-card"><h4>Certificados por ciclo</h4><div class="csub">Todos los ciclos · ignora el filtro de Ciclo</div><div class="certif-chartwrap"><canvas id="certif-chart"></canvas></div><div class="certif-note" id="certif-chart-note"></div></div>' +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="certif-det">' +
+      '<button type="button" class="certif-adv-toggle" id="cdet-toggle"><span class="chev" id="cdet-chev">\u25b8</span> Detalle por colegio</button>' +
+      '<div class="certif-det-body hidden" id="cdet-body"><div id="certif-body"></div></div>' +
+    '</div>';
   ['cf-pais', 'cf-red', 'cf-cal', 'cf-ment'].forEach(id => {
     const el = document.getElementById(id); if (el) el.addEventListener('change', renderCertifBody);
   });
@@ -2413,6 +2934,21 @@ function buildCertifShell() {
     });
   }
   const ci = document.getElementById('cf-col'); if (ci) ci.addEventListener('input', renderCertifBody);
+  const detT = document.getElementById('cdet-toggle');
+  if (detT) detT.addEventListener('click', () => {
+    const b = document.getElementById('cdet-body'), ch = document.getElementById('cdet-chev');
+    if (b) { const now = b.classList.toggle('hidden'); if (ch) ch.textContent = now ? '\u25b8' : '\u25be'; }
+  });
+  document.querySelectorAll('#cadv-nivel-seg button').forEach(btn => btn.addEventListener('click', () => {
+    CERTIF_NIVEL_METRIC = btn.dataset.m;
+    document.querySelectorAll('#cadv-nivel-seg button').forEach(b => b.classList.toggle('on', b === btn));
+    if (CERTIF_LAST_ROWS) renderCertifAdvanced(CERTIF_LAST_ROWS);
+  }));
+  document.querySelectorAll('#cadv-top-seg button').forEach(btn => btn.addEventListener('click', () => {
+    CERTIF_TOP_MODE = btn.dataset.t;
+    document.querySelectorAll('#cadv-top-seg button').forEach(b => b.classList.toggle('on', b === btn));
+    if (CERTIF_LAST_ROWS) renderCertifAdvanced(CERTIF_LAST_ROWS);
+  }));
 }
 
 function certifFilters() {
@@ -2473,7 +3009,10 @@ function renderCertifBody() {
     return String(b.ano).localeCompare(String(a.ano)); // …y su ciclo más reciente primero
   });
   renderCertifSummary(rows);
+  renderCertifNarrativa(f.pais);
   drawCertifChart(rowsChart);
+  CERTIF_ROWSCHART = rowsChart;
+  renderCertifAdvanced(rows);
   const hasAno = CERTIF_ALL.some(c => c.ano);
   const arrow = k => '<span class="oarrow">' + (CERTIF_SORT.key === k ? (CERTIF_SORT.dir === 'asc' ? '▲' : '▼') : '↕') + '</span>';
   const cls = k => 'osort' + (CERTIF_SORT.key === k ? ' sorted' : '');
@@ -2497,24 +3036,35 @@ function renderCertifBody() {
     '<th class="num ' + cls('tn') + '" data-k="tn">Aprob. no oblig. ' + arrow('tn') + '</th>' +
     (hasAno ? '<th class="' + cls('ano') + '" data-k="ano">Año/Ciclo ' + arrow('ano') + '</th>' : '') +
     '</tr></thead>';
-  const body = rows.map(c => '<tr>' +
-    '<td><span class="cert-cod">' + escapeHtml(c.cod) + '</span> · <b>' + escapeHtml(c.escuela) + '</b></td>' +
-    '<td>' + escapeHtml(c.pais) + '</td>' +
-    '<td class="num">' + num(c.rutas) + '</td>' +
-    '<td class="num">' + num(c.estudiantes) + '</td>' +
-    '<td class="num">' + num(c.inscripciones) + '</td>' +
-    '<td class="num">' + num(c.certificados) + '</td>' +
-    '<td class="num">' + tagTC(c) + '</td>' +
-    '<td class="num">' + plain(c.toRaw) + '</td>' +
-    '<td class="num">' + plain(c.tnRaw) + '</td>' +
-    (hasAno ? '<td>' + (c.ano ? escapeHtml(c.ano) : nd) + '</td>' : '') +
-    '</tr>').join('');
   const colspan = hasAno ? 10 : 9;
+  const canExpand = c => !!(detalleFor(c.cod, c.ano) || COMENTARIOS_BY_COD[codKeyC(c.cod)]);
+  const rowKeyOf = c => (codKeyC(c.cod) + '_' + String(c.ano || '')).replace(/[^A-Za-z0-9_]/g, '');
+  const body = rows.map(c => {
+    const hasDet = canExpand(c);
+    const rk = rowKeyOf(c);
+    const open = hasDet && CERTIF_EXPANDED.has(rk);
+    const chev = hasDet ? '<span class="chev">' + (open ? '\u25be' : '\u25b8') + '</span>' : '<span class="chev-none"></span>';
+    const attrs = hasDet ? ' class="certif-esc' + (open ? ' open' : '') + '" data-key="' + rk + '" data-cod="' + escapeHtml(c.cod) + '" data-ano="' + escapeHtml(String(c.ano || '')) + '"' : '';
+    let tr = '<tr' + attrs + '>' +
+      '<td>' + chev + '<span class="cert-cod">' + escapeHtml(c.cod) + '</span> \u00b7 <b>' + escapeHtml(c.escuela) + '</b></td>' +
+      '<td>' + escapeHtml(c.pais) + '</td>' +
+      '<td class="num">' + num(c.rutas) + '</td>' +
+      '<td class="num">' + num(c.estudiantes) + '</td>' +
+      '<td class="num">' + num(c.inscripciones) + '</td>' +
+      '<td class="num">' + num(c.certificados) + '</td>' +
+      '<td class="num">' + tagTC(c) + '</td>' +
+      '<td class="num">' + plain(c.toRaw) + '</td>' +
+      '<td class="num">' + plain(c.tnRaw) + '</td>' +
+      (hasAno ? '<td>' + (c.ano ? escapeHtml(c.ano) : nd) + '</td>' : '') +
+      '</tr>';
+    if (open) tr += '<tr class="certif-panel" data-panel-for="' + rk + '"><td colspan="' + colspan + '"><div class="certif-panel-in">' + certifNivelPanel(c.cod, c.ano) + '</div></td></tr>';
+    return tr;
+  }).join('');
   const empty = '<tr><td colspan="' + colspan + '" style="text-align:center;color:var(--ink-mute);padding:24px">Sin certificaciones para los filtros seleccionados.</td></tr>';
   const foot = '<div class="certif-foot">* Tasa de certificación = certificados / inscripciones del ciclo. Semáforo: ' +
     '<span class="dot" style="color:var(--rojo)">●</span> &lt;30% · ' +
     '<span class="dot" style="color:var(--amarillo)">●</span> 30–50% · ' +
-    '<span class="dot" style="color:var(--verde)">●</span> &gt;50%. Celdas vacías en la hoja se muestran como “—”.</div>';
+    '<span class="dot" style="color:var(--verde)">●</span> &gt;50%. Celdas vacías en la hoja se muestran como “—”. Colegios con ▸ tienen detalle de avance por nivel (clic para desplegar).</div>';
   document.getElementById('certif-body').innerHTML =
     '<div style="overflow-x:auto"><table class="onb-table">' + thead + '<tbody>' + (body || empty) + '</tbody></table></div>' + foot;
   document.querySelectorAll('#certif-body .onb-table th.osort').forEach(th => th.addEventListener('click', () => {
@@ -2523,34 +3073,86 @@ function renderCertifBody() {
     else CERTIF_SORT = { key: k, dir: (k === 'colegio' || k === 'pais' || k === 'ano') ? 'asc' : 'desc' };
     renderCertifBody();
   }));
+  document.querySelectorAll('#certif-body .certif-esc').forEach(tr => tr.addEventListener('click', () => {
+    const key = tr.dataset.key, cod = tr.dataset.cod, ano = tr.dataset.ano, tbody = tr.parentNode;
+    const existing = tbody.querySelector('tr.certif-panel[data-panel-for="' + key + '"]');
+    const ch = tr.querySelector('.chev');
+    if (existing) { existing.remove(); CERTIF_EXPANDED.delete(key); if (ch) ch.textContent = '\u25b8'; tr.classList.remove('open'); }
+    else {
+      const panel = document.createElement('tr');
+      panel.className = 'certif-panel'; panel.setAttribute('data-panel-for', key);
+      panel.innerHTML = '<td colspan="' + tr.children.length + '"><div class="certif-panel-in">' + certifNivelPanel(cod) + '</div></td>';
+      tr.after(panel); CERTIF_EXPANDED.add(key); if (ch) ch.textContent = '\u25be'; tr.classList.add('open');
+    }
+  }));
+}
+
+function renderCertifNarrativa(paisSel) {
+  const nEl = document.getElementById('certif-narrativa'); if (!nEl) return;
+  const nar = (paisSel && paisSel !== '__all__') ? NARRATIVA_BY_PAIS[normKey(paisSel)] : null;
+  if (!nar || (!nar.logros.length && !nar.oportunidades.length)) { nEl.style.display = 'none'; nEl.innerHTML = ''; return; }
+  const liL = a => a.map(x => '<li>' + escapeHtml(x) + '</li>').join('');
+  const liOpp = a => a.map(o => '<li>' + escapeHtml(o.texto) + '</li>').join('');
+  const liDef = a => a.map(o => '<li>' + (o.accion ? escapeHtml(o.accion) : '<span class="narr-nd">—</span>') + '</li>').join('');
+  const hayDef = nar.oportunidades.some(o => o.accion);
+  nEl.innerHTML = '<div class="certif-narr">' +
+    '<div class="narr-head">Lectura del período <span class="narr-pais">' + escapeHtml(nar.pais) + '</span></div>' +
+    '<div class="narr-cols' + (hayDef ? ' cols3' : '') + '">' +
+      (nar.logros.length ? '<div class="narr-col log"><h5>Logros destacados</h5><ul>' + liL(nar.logros) + '</ul></div>' : '') +
+      (nar.oportunidades.length ? '<div class="narr-col opp"><h5>Oportunidades de mejora</h5><ol>' + liOpp(nar.oportunidades) + '</ol></div>' : '') +
+      (hayDef ? '<div class="narr-col def"><h5>Qué definimos</h5><ol>' + liDef(nar.oportunidades) + '</ol></div>' : '') +
+    '</div></div>';
+  nEl.style.display = '';
 }
 
 function renderCertifSummary(rows) {
   const el = document.getElementById('certif-summary'); if (!el) return;
-  const by = {};
-  rows.forEach(c => {
-    const k = c.pais || 'Sin dato';
-    const o = by[k] || (by[k] = { pais: k, ins: 0, cert: 0, insCert: 0 });
-    o.ins += c.inscripciones || 0;
-    if (c.certificados != null) { o.cert += c.certificados; o.insCert += c.inscripciones || 0; }
-  });
-  const arr = Object.values(by).sort((a, b) => b.cert - a.cert);
-  const tot = { ins: 0, cert: 0, insCert: 0 };
-  arr.forEach(o => { tot.ins += o.ins; tot.cert += o.cert; tot.insCert += o.insCert; });
+  const n = v => v.toLocaleString('es-AR');
   const tasa = o => o.insCert > 0 ? (o.cert / o.insCert * 100) : null;
   const ttag = v => {
-    if (v == null) return '<span class="sin-plat">—</span>';
+    if (v == null) return '<span class="sin-plat">\u2014</span>';
     const cl = v > 50 ? 'cert-v' : v < 30 ? 'cert-r' : 'cert-a';
     return '<span class="cert-tag ' + cl + '">' + certPondFmt(v) + '</span>';
   };
-  const n = v => v.toLocaleString('es-AR');
+  const agg = () => ({ ins: 0, cert: 0, insCert: 0 });
+  const add = (o, c) => { o.ins += c.inscripciones || 0; if (c.certificados != null) { o.cert += c.certificados; o.insCert += c.inscripciones || 0; } };
+  const paisSel = (document.getElementById('cf-pais') || {}).value || '__all__';
+  const single = paisSel && paisSel !== '__all__';
+
+  if (single) {
+    const opm = {};
+    rows.forEach(c => {
+      const om = c.opMode || 'Sin dato', red = c.red || 'Sin red';
+      const o = opm[om] || (opm[om] = Object.assign(agg(), { op: om, sis: {} }));
+      add(o, c);
+      const sg = o.sis[red] || (o.sis[red] = Object.assign(agg(), { red }));
+      add(sg, c);
+    });
+    const oms = Object.values(opm).sort((a, b) => b.cert - a.cert);
+    const oneOp = oms.length <= 1;
+    const tot = agg(); oms.forEach(o => { tot.ins += o.ins; tot.cert += o.cert; tot.insCert += o.insCert; });
+    let body = '<tr class="pais"><td>' + escapeHtml(paisSel) + '</td><td class="n">' + n(tot.ins) + '</td><td class="n">' + n(tot.cert) + '</td><td class="n">' + ttag(tasa(tot)) + '</td></tr>';
+    oms.forEach(o => {
+      if (!oneOp) body += '<tr class="opm"><td>' + escapeHtml(o.op) + '</td><td class="n">' + n(o.ins) + '</td><td class="n">' + n(o.cert) + '</td><td class="n">' + ttag(tasa(o)) + '</td></tr>';
+      Object.values(o.sis).sort((a, b) => b.cert - a.cert).forEach(sg => {
+        body += '<tr class="sis"><td>' + escapeHtml(sg.red) + '</td><td class="n">' + n(sg.ins) + '</td><td class="n">' + n(sg.cert) + '</td><td class="n">' + ttag(tasa(sg)) + '</td></tr>';
+      });
+    });
+    el.innerHTML = '<table class="certif-sum"><thead><tr><th>País / Modo / Sistema</th><th class="n">Inscrip.</th><th class="n">Certif.</th><th class="n">Tasa cert.</th></tr></thead><tbody>' +
+      (oms.length ? body : '<tr><td colspan="4" style="text-align:center;color:var(--ink-mute);padding:16px">Sin datos</td></tr>') + '</tbody></table>';
+    return;
+  }
+
+  const by = {};
+  rows.forEach(c => { const k = c.pais || 'Sin dato'; const o = by[k] || (by[k] = Object.assign(agg(), { pais: k })); add(o, c); });
+  const arr = Object.values(by).sort((a, b) => b.cert - a.cert);
+  const tot = agg(); arr.forEach(o => { tot.ins += o.ins; tot.cert += o.cert; tot.insCert += o.insCert; });
   const body = arr.map(o => '<tr><td>' + escapeHtml(o.pais) + '</td><td class="n">' + n(o.ins) + '</td><td class="n">' + n(o.cert) + '</td><td class="n">' + ttag(tasa(o)) + '</td></tr>').join('');
   const totRow = '<tr class="tot"><td>Total</td><td class="n">' + n(tot.ins) + '</td><td class="n">' + n(tot.cert) + '</td><td class="n">' + ttag(tasa(tot)) + '</td></tr>';
   el.innerHTML = '<table class="certif-sum"><thead><tr><th>País</th><th class="n">Inscrip.</th><th class="n">Certif.</th><th class="n">Tasa cert.</th></tr></thead><tbody>' +
     (body || '<tr><td colspan="4" style="text-align:center;color:var(--ink-mute);padding:16px">Sin datos para los filtros seleccionados</td></tr>') +
     (arr.length ? totRow : '') + '</tbody></table>';
 }
-
 const CERTIF_CHART_COLORS = ['#FFC72C', '#111111', '#27a05a', '#4a90d9', '#d4a017', '#c0392b', '#8e44ad', '#16a085', '#e67e22'];
 
 function drawCertifChart(rows) {
