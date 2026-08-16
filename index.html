@@ -2139,7 +2139,7 @@ function tipoOp(v) {
 }
 
 function mapKick(rows) {
-  const H = rows.length ? Object.keys(rows[0]).filter(k => k !== '__origen') : [];
+  const H = [...new Set(rows.flatMap(r => Object.keys(r)))].filter(k => k !== '__origen');
   const c = {
     sist: pick(H,'Sistema'), cod: pick(H,'COD'), col: pick(H,'Colegio','Nombre Normalizado Colegio'),
     ment: pick(H,'Mentor'), sub: pick(H,'Subetapa de implementación','Subetapa de implementacion'),
