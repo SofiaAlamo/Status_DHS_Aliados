@@ -2098,7 +2098,7 @@ async function loadOnboarding() {
     const codKey = c => String(c || '').toUpperCase().replace(/\s+/g, '');
     const statusByCod = {};
     (RAW ? (RAW.rows || []).concat(RAW.rowsNoActivos || []) : []).forEach(s => { if (s.cod) statusByCod[codKey(s.cod)] = s; });
-    KICK_ALL.forEach(k => { const m = statusByCod[codKey(k.cod)]; k.docentesPLD = m ? m.docentesPLD : null; k.vitalidad = m ? m.vitalidad : null; k.pais = m ? m.pais : (k.paisKick || k.origen); k.enPlataforma = !!m; });
+    KICK_ALL.forEach(k => { const m = statusByCod[codKey(k.cod)]; k.docentesPLD = m ? m.docentesPLD : null; k.vitalidad = m ? m.vitalidad : null; k.pais = k.paisKick || (m ? m.pais : null) || k.origen; k.enPlataforma = !!m; });
     KICK_ALL = KICK_ALL.filter(k => !NATIVA_CODS.has(codKey(k.cod)) && normKey(k.sistema) !== 'nativa').filter(kickEnVista);
     buildOnbShell();
     renderOnbBody();
