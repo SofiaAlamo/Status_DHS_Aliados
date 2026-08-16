@@ -2098,7 +2098,7 @@ async function loadOnboarding() {
     const codKey = c => String(c || '').toUpperCase().replace(/\s+/g, '');
     const statusByCod = {};
     (RAW ? (RAW.rows || []).concat(RAW.rowsNoActivos || []) : []).forEach(s => { if (s.cod) statusByCod[codKey(s.cod)] = s; });
-    KICK_ALL.forEach(k => { const m = statusByCod[codKey(k.cod)]; k.docentesPLD = m ? m.docentesPLD : null; k.vitalidad = m ? m.vitalidad : null; k.pais = m ? m.pais : k.origen; k.enPlataforma = !!m; });
+    KICK_ALL.forEach(k => { const m = statusByCod[codKey(k.cod)]; k.docentesPLD = m ? m.docentesPLD : null; k.vitalidad = m ? m.vitalidad : null; k.pais = m ? m.pais : (k.paisKick || k.origen); k.enPlataforma = !!m; });
     KICK_ALL = KICK_ALL.filter(k => !NATIVA_CODS.has(codKey(k.cod)) && normKey(k.sistema) !== 'nativa').filter(kickEnVista);
     buildOnbShell();
     renderOnbBody();
@@ -2144,6 +2144,7 @@ function mapKick(rows) {
     sist: pick(H,'Sistema'), cod: pick(H,'COD'), col: pick(H,'Colegio','Nombre Normalizado Colegio'),
     ment: pick(H,'Mentor'), sub: pick(H,'Subetapa de implementación','Subetapa de implementacion'),
     op: pick(H,'Tipo de operación','Tipo de operacion'), contrato: pick(H,'Contrato'),
+    pais: pick(H,'País','Pais','País colegio','Pais colegio','País del colegio'),
     bien: pick(H,'Onboarding y bienvenida'), minuta: pick(H,'Minuta enviado'), pld: pick(H,'Status PLD'),
     diag: pick(H,'Diagnóstico','Diagnostico'), rol: pick(H,'Rol admin e inicio mentoría','Rol admin e inicio mentoria')
   };
@@ -2165,6 +2166,7 @@ function mapKick(rows) {
     if (normKey(subeRaw).includes('dado de baja')) op = 'Baja';
     return {
       origen: r.__origen || '—',
+      paisKick: clean(r[c.pais]),
       sistema: clean(r[c.sist]) || '—',
       cod: clean(r[c.cod]),
       colegio: clean(r[c.col]) || 'Sin nombre',
